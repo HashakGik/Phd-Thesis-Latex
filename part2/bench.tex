@@ -1,0 +1,528 @@
+\chapter{Benchmarking Neuro Symbolic Artificial Intelligence}
+\label{chap:benchnesy}
+
+In this chapter we describe the characteristics of benchmarks for Neuro-symbolic Artificial Intelligence, covering the objectives which set them apart from traditional Machine Learning benchmarks, the desirable properties for fair metric evaluation, and a novel taxonomy which we believe can act as invaluable tool to navigate the scattered landscape of Neuro-symbolic evaluation.
+%
+The content of this chapter intersects some of the notions described in the co-authored paper Benchmarking in Neuro-symbolic AI~\cite{manhaeve2024benchmarking}, but it constitutes otherwise a novel contribution of this thesis.
+
+\section{Objectives and Desiderata}\label{bench:sec:objectives}
+In this section we cover characteristics important for practical usefulness of Neuro-symbolic evaluation frameworks.
+%
+The presented characterization of objectives is pragmatic and fundamental to set expectations, allowing to clearly determine compatibility between a given method and evaluation framework, and, by extension, to determine which methods can be directly compared experimentally.
+
+%\subsection{Evaluation goals}\label{bench:sec:goals}
+\paragraph{Evaluation Goals.} Compared to other branches of Machine Learning, with a long tradition of industrial and scientific applications outside of research, Neuro-symbolic Artificial Intelligence is still a field with a predominant research component. For this reason, performance evaluation alone, especially on synthetic datasets, cannot be used as a reliable proxy of true performance in real-world applications. Moreover, as Neuro-symbolic systems can conceptually (and sometimes also practically) be split into learning and reasoning components, an end-to-end evaluation can only provide partial insight on the system's inner working.
+We posit that a benchmark should explicitly state its intended goal, as well as the set of constraints which should be enforced during training and evaluation, to enable practioners to select proper tools, and guarantee a fair comparison across different methods, according to the declared goal.
+%
+We envision the following goals a benchmark may try to achieve: (i.) \textit{single-task performance}, only for specific tasks of practical relevance (e.g., autonomous driving), (ii.) \textit{multi-task average performance}, for collections of tasks which showcase competency in skills believed to be relevant for practical applications (e.g., rule learning from data), (iii.) \textit{generalization across multiple settings} (e.g., across semantically correlated tasks, to out-of-distribution settings, robustness to domain-shift, etc.), (iv.) \textit{knowledge transfer} (across correlated tasks, or across observations over time), and (v.) \textit{quantification of computational burden} (e.g., training effort, inference cost per query, caching opportunities, etc.).
+
+%\subsection{Task nature}\label{bench:sec:tasktypes}
+\paragraph{Task Nature.} Integrating Machine Learning and Classic Artificial Intelligence provides two orthogonal opportunities which cannot be evaluated jointly: (i.) solvability of \textit{new tasks of interest}, not solvable by either subsystem alone, and (ii.) \textit{solutions to existing tasks} which are characterized by novel desirable properties.
+Benchmarks designed with either goal in mind may fail at providing useful insight for the other, thus a coherent evaluation framework should ideally focus only on one type of task.
+The choice of tasks should be coherent with the stated goal of the benchmark, to help detect and address conflicting requirements and trade-offs. % (e.g., a benchmark which tries to assess both multi-task average performance and interpretability).
+%
+Novel tasks specific to Neuro-symbolic Artificial Intelligence, such as Distant Supervision, cannot be solved by either neural or symbolic formalism alone and rely on a tight integration of the two. Examples of such tasks are those involving \textit{knowledge integration}, \textit{knowledge induction}, \textit{joint perception and reasoning}, \textit{learning symbols}, and so on.
+On one hand, Neuro-symbolic integration can augment Neural Networks, enabling \textit{transparency}, \textit{strong constraint enforcement}, \textit{faster convergence}, or \textit{stronger generalization}.
+On the other hand, Neuro-symbolic methods can overcome the challenges of Classic Artificial Intelligence, which is affected by knowledge acquisition bottlenecks, large search spaces and lack of flexibility. Symbolic methods can benefit from \textit{learnable heuristics}, \textit{faster inference}, and the possibility of exploiting \textit{soft constraints}.
+
+%\subsection{Metrics}\label{bench:sec:metrics}
+\section{Metrics}
+The ultimate objective of a benchmark is to enable straightforward comparison between methods%. Given the fragmented state of NeSy research, however, there cannot be a one-size-fits-all evaluation score.
+, however a single score cannot capture all the characteristics of NeSy frameworks.%NeSy evaluation cannot be reduced to a single score.
+%Coherently with the stated goals, a benchmark can be characterized by a collection of target metrics, which allow comparing methods along one or more of the following dimensions.
+
+\paragraph{Performance.} %Performance is perhaps the most relevant single dimension of evaluation of any learning system. In this regard, 
+Neuro-symbolic Artificial Intelligence inherits all the task settings and validation protocols typical of Machine Learning, and, under the assumption of exact reasoning, (i.) \textit{end-to-end evaluation} could be enough to characterize performance. However, for systems performing approximate inference, rule-learning, reasoning under uncertainty, etc., it is important to characterize performance (ii.) \textit{disjointly}, in multiple independent stages (e.g., concept-level and task-level accuracies), or (iii.) \textit{jointly}, in a conditional setting (e.g., mutual dependence of the reasoning error and the learning error).
+%Not every NeSy task can be reduced to classification, however in logic-based NeSy, the reasoning component ultimately produces either decisions or distributions. Many NeSy architectures perform reasoning as the final step before the output, thus performance evaluation can be often reduced to the case of \textbf{deterministic decision} (e.g., accuracy, precision, recall, F1-score, etc.) and \textbf{probabilistic divergence} (e.g., KLD, JSD, etc.), when task supervisions are available.
+As many systems claim stronger robustness, compared to vanilla Neural Networks, in-distribution performance evaluation should ideally be complemented with analyses on (iv.) \textit{out-of-distribution}, (v.) \textit{cross-domain} and (vi.) \textit{other generalization} settings.
+
+\paragraph{Learning Efficiency.} One of the primary goals of Neuro-symbolic integration is to exploit knowledge, in order to achieve an equivalent (or superior) level of performance than Machine Learning, while using significantly fewer data points. For this reason, it is crucial to characterize frameworks in terms of how effectively they can exploit available data, and, ideally, how well they are expected to scale if the ``learning budget'' is increased. 
+%
+Learning efficiency can be characterized along two orthogonal directions: (i.) \textit{data efficiency} (how much data is needed for a given performance threshold) and (ii.) \textit{extraction efficiency} (how effective is information extraction from a single data point).
+Benchmark designers do not have control over the latter (which can be characterized by learning hyper-parameters specific to each method), but they can encourage researchers to disclose extended information, such as an F1-score curve computed by varying training epochs.
+Datasets can be partitioned explicitly into multiple chunks to facilitate direct comparison of data efficiency. %Then, on top of partitions, \textbf{discrete} scores (e.g., how many data partitions are required to achieve a target accuracy), \textbf{continuous} measures (e.g., average performance in a leave-n-out setting \textcolor{red}{?} ) and \textbf{curves} (e.g., F1-score against number of data partitions) can be easily computed and compared across NeSy frameworks.
+%
+In semi-supervised learning settings, benchmark designers have additional control on the (iii.) \textit{density of annotations}, and stratified versions of datasets can be produced.
+For learning over time applications, additional metrics can evaluate learning dynamics, like (iv.) \textit{information retention and forgetting} with respect to the amount of observed data, (v.) \textit{performance gain} after an additional round of training, and so on.
+
+\paragraph{Reasoning Efficiency.} Reasoning in Neuro-symbolic Artificial Intelligence is often achieved by some form of search, yielding a variable-length chain of steps. For systems where knowledge is given, measures like the (i.) \textit{number of backtracking steps} or (ii.) \textit{average search depth/breadth}, may provide insights on how effective the framework is at exploiting available knowledge, however, these proxies can fail to discriminate between an efficient search and an efficient knowledge encoding, thus proper care should be taken when using them in comparisons.
+%
+On the other hand, when frameworks possess knowledge induction capabilities, different metrics may be needed. For instance, when ground truth knowledge is available, (iii.) \textit{coverage measures} (e.g., the ratio between models of the discovered theory and models of ground truth) can be used both as performance proxies, as well as approximations of reasoning efficiency in a ``semantic-driven'' sense, at the expenses of not being able to disentangle the two components. Under the assumption that reasoning depth can be correlated with the syntactical complexity of a rule, (iv.) \textit{compression indexes} can be used to compare the ``effort'' in performing reasoning in ground truth hypothesis space and learned hypothesis space, however they do not take into account correctness of inference.\footnote{e.g., learning tautology is maximally efficient with respect to any ground truth, but it is also maximally lossy.}
+%
+Defining reasoning efficiency metrics %for unsupervised knowledge extraction, or more complex settings (like probabilistic inference, non-monotonic reasoning, etc.) are non-trivial to define.
+when ground truth is unavailable remains a challenging open problem.
+
+\paragraph{Time Efficiency.} 
+%As many NeSy-AI systems rely on search, training and querying times depend on multiple contributions, each of variable and non-negligible magnitude. 
+Two semantically equivalent Neuro-symbolic formalisms may be characterized by substantially different temporal behaviors, %making them suitable for different use-cases. H
+however, temporal evaluation is a non-trivial problem. 
+At one end of the spectrum, (i.) \textit{wall-clock time} is straight-forward to measure, but it is subject to large experimental variability and it cannot be reliably compared across different experimental setups. 
+At the other end, (ii.) \textit{asymptotic complexity}, while mathematically sound and insensitive to experimental conditions, is too coarse-grained to provide useful insight, and difficult to evaluate for large frameworks combining multiple algorithms, applied to intermediate values (which may have a size not directly correlated to a single input size).
+%and difficult to evaluate when multiple components interact.
+%
+The choice of how to meaningfully partition time measurements is also non-trivial.
+While (iii.) \textit{total time} may act as a proxy for computational burden as a whole (especially important for issues related to independent reproducibility of results and Green AI~\cite{schwartz2020green}), (iv.) \textit{profiling} execution in meaningful steps is arguably more important for run-time characterization, but difficult to compare across methods.
+At a macro-scale, (v.) \textit{discriminating between training and inference} (possibly in terms of cost for a single query), as it is general practice in Machine Learning, allows to characterize a method in terms of easily comparable discrete steps. %an higher, but ideally one-time,\footnote{In practice this is never the case during development, and in some scenarios, such as continual learning, it is actually assumed a variable cost as well.} cost and a, smaller but variable cost.
+At a micro-scale, a single query may be resolved in multiple steps, possibly involving caching or other (vi.) \textit{amortized costs}, which should be analyzed separately from (vii.) \textit{constant} and (viii.) \textit{variable costs}.
+Finally, approximate inference approaches may rely on iterative refinement, where temporal budget affects accuracy. For these methods, characterizing the (ix.) \textit{time-performance trade-off} is also important.
+
+\paragraph{Space Efficiency.} In a similar fashion to temporal requirements, memory allocation of Neuro-symbolic methods entails multiple aspects. An integrated framework can potentially inherit memory-related issues both from Machine Learning (e.g. storing tensors and computational graphs, having different requirements for training and inference) and Classic AI (e.g. large symbolic data structures and recursion stacks). The same considerations raised for time, also apply for memory, and a granular characterization of space in fixed and variable components is an important aspect of evaluation.
+This is especially true when considering that one of the goals of Neuro-symbolic Artificial Intelligence is to increase trust in safety-critical applications (e.g., autonomous driving) which may be deployed on systems with limited computational budget, both time- and space-wise.
+
+\section{A Taxonomy for Neuro-symbolic Tasks}\label{bench:sec:taxonomy}
+In this section we propose a six-dimensional taxonomy for Neuro-symbolic tasks. %For our purposes, in this document we refer to benchmarks as collections of tasks, coherent along one or more axes of the proposed taxonomy (with the limit case of single-task benchmarks). We argue that coherently aligning tasks within a benchmark is instrumental in achieving the desired evaluation goal, as .
+Benchmarks should be collections of tasks aligned along one or more dimensions, to facilitate comparison of methods with similar characteristics.
+Each dimension covers properties of the \textit{problem space} and is designed to provide a synthetic description of the reasoning capabilities required to solve a given task, in a way which is as agnostic as possible in terms of the chosen implementation of the solution.
+%
+%Each of the proposed classification axes are intended to characterize tasks in their problem space, and they were selected to be as solution-agnostic as possible, while still preserving enough information to determine a method's applicability to a given task.
+%Each category covers properties in the task's problem space and allows for quick identification of the learning and reasoning skills they entail.
+
+\subsection{Data Modality}
+The input space of a task is characterized by different properties, which restrict a method applicability, but also act as a minimal framework on top of which basic reasoning primitives can be designed.
+
+\paragraph{Tabular.} Key-value assignments of features. While not restricted by inductive biases, they can be directly mapped to atomic entities, such as propositions, probabilities, elements of sets, or scalars.
+
+\paragraph{Relational.} Collections of tuples. They can be represented as databases or graphs~\cite{delong2023neurosymbolic}, which can be mapped to First-order Logic, and they are often associated with \textit{biases on the structure} (e.g., transitivity, symmetry, etc.). Processing relational data may require to reason on reachability or existence of specific objects or tuples, to learn the structure from data, or to embed relations as background knowledge.
+
+\paragraph{Text.} Sequences of discrete objects, characterized by both short- and long-term positional dependencies. % (e.g. short-distance syntactical coherence, long-distance interactions in protein sequences, temporal information flow across multiple sentences in story-telling, etc.). 
+Reasoning about texts is often characterized by the necessity of selecting and retrieving relevant information~\cite{hamilton2022neuro}. Reasoning can be performed on a \textit{collective basis} (i.e., over a bag of words), or a \textit{temporal basis} (i.e., over a sequence), the latter requiring some form of memorization.
+
+\paragraph{Images.} Matrices of continuous objects (pixel intensities), characterized by a \textit{spatial locality bias}, and often a set of invariance assumptions, both along space (e.g. translation-invariance), and channels (e.g. invariance with respect to illumination). Pixels cannot be mapped 1:1 to concepts, therefore a sub-symbolic\footnote{Although non-learnable, algorithmic feature extraction methods can still be considered sub-symbolic, as there is no mapping to human-defined concepts.} step is always required to extract features for downstream symbolic processing. % (e.g. a digit label from an MNIST image is more beneficial for an arithmetic task than a collection of images, and even in the latter case, clustering would still be a form of sub-symbolic processing).
+
+\paragraph{Sound and Time Series.} Quantities changing their value over time in a continuous fashion, characterized by \textit{temporal locality and causality biases}, and a set of time-related properties~\cite{yan2022neuro}. Often there is the need of extracting events of interest from background noise, extracting spectral information, reasoning about (quasi-)periodic events, identifying (self-)similarity between sequences, and causal reasoning.
+
+\paragraph{Videos.} Sequences of images (possibly associated with sound), combining both characteristics of images and time series. Characterized by additional biases related to \textit{object permanence, spatio-temporal locality and optical flow}. %Reasoning often to be robust against incomplete observability, and requires memorization.
+Reasoning needs to be robust against partial observability and uncertainty.
+
+\paragraph{Multi-modal.} Composition of other modalities. As multi-modal objects need to be integrated during computation, they provide additional inductive biases, which can be exploited for reasoning (e.g., multi-view representations of the same object, cross-modal relations, etc.).
+
+\paragraph{Spatial and Spatio-temporal.} Multi-modal representations of objects characterized by a pose in space. Spatial reasoning~\cite{lee2023neuro} relies on \textit{geometric relations and constraints} (e.g., two objects cannot occupy the same volume at the same time, actions allowed only when in close proximity, etc.), and the capability of generating and updating a faithful representation of the world, often in real-time.
+
+
+\subsection{Task Family}
+The nature of a task's output space directly affects how a solution should be constructed. In Neuro-symbolic frameworks in particular, where learning and reasoning steps can be intertwined in multiple ways, it is not possible to select the most promising strategy, without taking into account the type of task.
+%
+%Although, as mentioned in section \ref{bench:sec:tasktypes}, a NeSy system may aim at solving a traditional neural or a traditional symbolic task in a more effective way (e.g. by learning with few samples, or by guaranteeing safety/interpretability), in this section we focus only on families of tasks which cannot be realistically solved without exploiting both learning and reasoning.
+
+\paragraph{Distant Supervision.} Tasks in this family are characterized by supervised labels which are indirectly related to the object of interest, by means of some form of inference. Distant Supervision tasks are of particular relevance for the Neuro-symbolic community~\cite{marra2024statistical}, as they can be easily split into a cascade of learning and reasoning, which makes theoretical and experimental analyses more feasible. %, and a plethora of real-world applications can be framed as distant supervision (e.g., an autonomous driving system may be required to learn object detection, given only supervisions for a reinforcement learning task and a set of hard constraints).
+
+\paragraph{Concept Learning.} This family can, to some extent, be considered the dual of Distant Supervision. Given supervision at two different abstraction levels, Concept Learning tasks can be seen as the composition of concept extraction, and label prediction as a function of concepts~\cite{koh2020concept}. Community efforts in this area include rule extraction, representation learning, and learning efficiently or from noisy labels. Although most work on concept learning assumes concepts to be propositional in nature, there are also works moving towards Relational Concept Learning~\cite{barbiero2023relational}.
+
+\paragraph{Structured Prediction.} Given a collection of objects, the goal of this family of tasks is to assign labels which maximize a global objective for the entire set (unlike traditional classification where the objective is locally applied to each sample separately). Learning can be conceptually split between object-level and collection-level, and reasoning typically needs to take both characteristics into account, to successfully optimize the final objective.% NeSy approaches to structured prediction are especially appealing, as exploiting of relations among objects in the input set is often crucial.
+
+\paragraph{Structure Learning.} Given observations of a phenomenon, these tasks estimate the underlying structure which best models it. This family of tasks, inherited from Statistical and Relational Artificial Intelligence, is characterized by additional challenges and opportunities when framed in a Neuro-symbolic setting.
+
+\paragraph{Program Synthesis.} Given some intended behavior (constraints or input-output examples), the goal of this task family is to learn a specification, in some target programming language, which produces the desired outcome when executed. Although a subfield of Structure Learning, Program Synthesis requires deep understanding of complex structures like branches, loops and recursive constructs. Neuro-symbolic frameworks may aim at jointly learning programs and the semantics of primitives, or at learning heuristics to guide search.
+
+\paragraph{Question Answering.} This family of tasks can be considered a subset of Program Synthesis, where a query, in the form of a natural language question, is resolved by generating first a program to resolve the query, and then executing it to produce a natural language answer. Inference can involve multi-modal queries (e.g., in Visual Question Answering), commonsense~\cite{ma2019towards}, and multi-step reasoning~\cite{zelikman2022star}.
+
+\paragraph{Link Prediction.} Given a graph with missing edges, these tasks, which are a subset of Structure Learning, try to reconstruct the original, unobserved, graph, or to predict link changes over time. Neuro-symbolic approaches to link prediction complement techniques from Statistical and Relational Artificial Intelligence with Graph Neural Networks, achieving both stronger predictive power and symbolic reasoning.
+
+\paragraph{Generative Tasks.} Assuming the existence of a hidden probability distribution from which data has been sampled, these tasks attempt to approximate the latent parameters of such distribution. %Learned generative models can then be used for inference, or to generate new samples from the approximate distribution. 
+Neuro-symbolic methods merge the principled nature of probabilistic approaches, the flexibility of Neural Networks and the possibility of controlling the hypothesis space by means of logic constraints~\cite{misino2022vael}.
+
+\paragraph{Interpretable/constrained Clustering.} These families of tasks aim at determining a semantically meaningful partitioning of input data, without sample-level information. Unlike sub-symbolic techniques, which learn equivalence classes with unclear semantics, Neuro-symbolic approaches can enforce constraints in terms of specific properties shared by every instance within a cluster~\cite{ciravegna2023logic}.% As clustering involves the optimization of an objective function, this category is strongly associated with structured prediction, albeit lacking sample-level supervision.
+
+\paragraph{Learning Constraints.} The goal of this family of tasks is to induce instances of Constraint Satisfaction or Combinatorial Optimization problems from data~\cite{de2018learning,fajemisin2023optimization}.
+
+\paragraph{Learning to Optimize.}
+In this setting, the goal is to generate solutions to computationally intractable tasks. The model is trained to approximate the optimal solution and knowledge is used to make it more likely that a consistent solution is generated.
+
+
+
+\subsection{Minimal Logic Expressivity}
+A task can be solved by multiple formalisms, with more expressive ones including less powerful theories. The opposite is also true: since datasets are finite, it is always possible to reduce a logic framework to propositional, by enumerating all the possible instances, this however comes at the expense of a combinatorial explosion of search space and reduced (or nullified) generalization to unseen samples.
+%
+For a given task, there is minimal expressivity which is required to solve it while preserving generalization to unseen data.
+%
+%If, however, the number of objects is variable, generalization on the same task requires first order expressivity.}
+%
+%. If there is always a fixed number of objects in the image, this task requires propositional capabilities, however, with a variable (and potentially unbounded) number of objects, it is not possible to generalize a solution without first order logic expressivity.}
+%
+%This dimension characterizes tasks by the smallest logic theory required to solve them.
+In part, a task's expressivity is determined by modality and task family, however, similar tasks can require different minimal expressivity.\footnote{e.g., the ``same shape'' task in Abstract Visual Reasoning is propositional, when images contain a fixed number of objects. First-order Logic is however required, if images depict collections of variable cardinality.}
+With the exception of purely logical tasks, this characterization is insufficient on its own, as reasoning often needs to be complemented with additional theories (e.g., arithmetic). %Although we have not explicitly designed a classification dimension for additional theories, as it would have fragmented the existing landscape excessively, we note that a collection of datasets should ideally be coherent also across this implicit categorization.
+
+\paragraph{Propositional.} These tasks are characterized by reasoning over a fixed vocabulary of concepts, which can assume values from finite domains. In principle, as datasets are finite, every task can ``propositionalized'', by enumerating every possible grounding, at the expenses of overfitting the dataset. %\textcolor{red}{TODO: REWRITE (3 lines)} 
+The majority of purely sub-symbolic tasks, for modalities such as images, requires to reason on a fixed number of concepts, this is a result of the architectural biases of end-to-end neural networks, which often process inputs in a single pass, by extracting and re-combining constant-cardinality collections of features. Some Neuro-symbolic systems rely on this characteristic to pass propositional information between neural and symbolic components, tasks designed with these systems in mind typically assume the reasoning component to be purely propositional as well.%NeSy systems are typically designed to rely on a neural component for feature extraction and tasks are often designed with this architectural bias in mind, therefore, their perception-to-reasoning interface can be often characterized by a propositional framework and .%Under these circumstances, the entire task can be characterized as propositional, if also the reasoning component is based on propositional inference.
+
+\paragraph{First-order.} This family of tasks requires reasoning over infinite domains, relations between objects, and ``meta-relations'' across different instances. %\textcolor{red}{TODO: REWRITE}Some tasks require first order capabilities, this is the case of variable-size inputs (e.g. relational data, object detection in images, texts, etc.) where it is important to reason about ``relations between objects'' and meta-reason on ``relations about instances''. %
+Apparently propositional tasks, may also be promoted to First-order expressivity if they are framed within specific contexts lifting their ``boundedness'' (e.g. out-of-distribution guarantees).
+
+\paragraph{Modal.} Tasks in this group are characterized by a possible world semantics, where solutions are determined by necessity or possibility constraints on every instance. This is the case, for example, for tasks which require to reason about time or beliefs.
+
+\subsection{Direction of Reasoning}
+%Solutions to tasks can be abstractly characterized as relations between inputs and outputs. As reasoning is a crucial component of NeSy systems, such relation can also 
+Reasoning can be expressed as entailment between two sets of logical statements (i.e., premises and conclusions), which concisely characterizes the reasoning direction intended to solve the task. Premises and conclusions are some combination of facts ($\gF$), background knowledge ($\gK$), and observations ($\gO$).
+
+\paragraph{Deductive.} $\gF \cup \gK \models \gO$, deduction allows to derive statements about observations, by exploiting background knowledge and known facts. It allows for both exact and approximate inference, at the expenses of being a purely analytical form of reasoning. %Most traditional machine learning methods operate in deductive mode after they have been trained.
+
+\paragraph{Inductive.} $\gF \cup \gO \models \gK$, induction is a synthetic form of reasoning where observations and known facts are generalized into approximate, but novel, knowledge. %Traditional machine learning methods are trained in an inductive fashion.
+
+\paragraph{Abductive.} $\gO \cup \gK \models \gF$, given knowledge and observations, abduction derives diagnostic statements in the form of plausible facts (or explanations) about observed instances.
+
+\paragraph{Transductive.}$\gO \models \gO'$, transduction is characterized by analogical reasoning, where known properties of some instances of observations are transferred by similarity (possibly exploiting known facts and knowledge) to other instances.
+
+\subsection{Type of Dynamics}
+Real-world settings are highly dynamic, and often difficult to characterize in a time-independent fashion. Conversely, traditional Machine Learning assumes latent factors to be independent and identically distributed (i.i.d.), and (most) logic formalisms rely on immutable knowledge.
+This dimension characterizes tasks in terms of behavior with respect to time, an important and under-explored aspect in Neuro-symbolic Artificial Intelligence. 
+%Although not specific to NeSy AI, we strongly believe this characterization to be an important and under-explored direction of research, which can potentially reduce the gap between synthetic and real-world settings.
+
+\paragraph{Data-observation Dynamics.} During training and inference, data observation can be modeled as sampling from underlying probability distributions, with time corresponding to sample progression. Time-independent observations are: (i.) \textit{fully i.i.d.} sampling, where training and inference samples are distinct, but generated from the same distribution, and (ii.) \textit{zero-shot} learning, where data is not observed at training time.\footnote{The intermediate \textit{few-shot} setting is similar to \textit{fully i.i.d}, but characterized by a number of samples insufficient to estimate the underlying distribution.}
+Time-dependent settings are: (iii.) \textit{incremental learning}, where tasks evolve in a way similar to how humans acquire new concepts, and (iv.) \textit{lifelong learning}, where the training phase is unbounded and data distributions can potentially shift infinitely many times.
+Challenges specific to Continual Learning, such as catastrophic forgetting and the stability-plasticity dilemma, can be mitigated by Neuro-symbolic systems reasoning over time~\cite{marconato2023neuro} and exploiting domain knowledge to learn memorization strategies.
+
+
+%\textcolor{red}{TODO: SHORTEN SIGNIFICANTLY} It is customary in machine learning, to assume samples to be drawn from an underlying probability distribution. 
+%Tasks can be classified according to the time dependency of such probability distribution, where time here is intended as the sample progression during training and inference. The most common setting is the \textbf{i.i.d.} assumption, where the temporal dimension is irrelevant and enough samples are drawn to faithfully reconstruct the underlying distribution. % where enough samples are drawn from the same distribution, allowing the model to extract relevant characteristics instrumental to task resolution.
+%
+%In \textbf{zero-shot inference}, the data distribution related to the specific task is not observed at all during learning, similarly, in \textbf{few-shot inference}, a limited number of samples is used during training, but these are not enough to fully capture relevant information.
+%
+%Zero-shot, few-shot and i.i.d. settings, are all characterized by independence from time. 
+%In \textbf{incremental learning}, the data distribution evolves over time, and tasks are framed in a way more similar to how humans learn and are able to retain new concepts. Similarly, in \textbf{continual learning}, the boundaries between training distribution and test distribution are blurred, with the objective of continually improving performance, both on new and previously observed data. % observed data (coming from the probability distribution conditioned on the current time step), and previously observed samples (extracted on the distribution conditioned on a past time step). 
+
+
+\paragraph{Knowledge Dynamics.} Akin to data observation, knowledge in real-world settings can be characterized by a temporal dependency.
+We can broadly split knowledge dynamics in (i.) \textit{epistemic dynamics}, where the underlying representation of the world is fixed, but possibly discovered over time, and (ii.) \textit{truth dynamics}, where logic statements change state over time.
+%
+In the former category, we identify tasks characterized by (i-i.) \textit{static knowledge} and (i-ii.) \textit{fixed knowledge disclosed over time}. % (i.e. rule learning from data).
+The latter category contains tasks characterized by (ii-i.) \textit{monotonic knowledge} (e.g., in general game playing, new rules do not affect old games) or  (ii-ii.) \textit{defeasible knowledge}, where validity of past inferences may change.
+%The latter category can be further split into tasks which entail \textbf{monotonic reasoning}, where additional knowledge affects only future inferences (e.g. general game playing tasks, where rules related to a new game do not affect outcome on past games), and \textbf{defeasible reasoning} tasks, where new knowledge may cause old inferences to become invalid (e.g. the penguin exception toy problem).
+
+\subsection{Knowledge Structure}
+Knowledge in Neuro-symbolic tasks can be provided to (or withheld from) the system in multiple ways, abstracting from the specific encoding, tasks can be characterized by how knowledge is structured. %In most of the cases, the underlying task knowledge is assumed to be \textbf{deterministic} and \textbf{reliable}, but this may not always be the case.
+
+\paragraph{Given Knowledge.} Tasks in this family are characterized by two inputs: the dataset and the background knowledge, expressed in some formalism (e.g. a Prolog program). In most cases knowledge is provided by an oracle which is reliable, but instances of probabilistic or noisy given knowledge are possible as well.
+%Given knowledge can be either deterministic (e.g. a set of Horn clauses) or probabilistic (e.g. a Bayesian network), and its structure directly affects a task's minimal logic expressivity (e.g. first order rules cannot be enforced by a propositional system). 
+
+\paragraph{Template-filling.} Knowledge for this class of tasks is characterized by a given scaffolding on top of which the Neuro-symbolic system must ground some variables. % in order to successfully solve the task. 
+In (i.) \textit{parameter learning} settings, templates are grounded with atomic values, while in a more (ii.) \textit{general setting}, variables are grounded with structured terms.
+
+\paragraph{Knowledge Learned from Scratch.} In this family, knowledge must be entirely (parameters and structure) discovered by the Neuro-symbolic system. Often the search space for unbounded knowledge discovery is intractably large and search must be guided by given \textit{meta-knowledge} about the structure (e.g., language biases in Inductive Logic Programming).
+
+\paragraph{External Sources of Knowledge.} Knowledge in this category does not come directly from the task. This is the case for (i.) \textit{commonsense reasoning}~\cite{arabshahi2021conversational}, (ii.) \textit{multi-task skill learning}, and (iii.) \textit{online retrieval} from external oracles~\cite{chen2021web}.
+
+\iffalse
+\section{Visualized Taxonomy}\label{bench:app:taxonomy}
+\begin{multicols}{2}
+    \dirtree{%
+.1 Data modality.
+.2 Tabular.
+.2 Relational.
+.2 Text.
+.2 Images.
+.2 Sound and Time series.
+.2 Videos.
+.2 Multi-modal.
+.2 Spatial and Spatio-temporal.
+}\dirtree{%
+.1 Task family.
+.2 Distant supervision.
+.2 Concept learning.
+.2 Structured prediction.
+.2 Structure learning.
+.3 Program Synthesis.
+.3 Question answering.
+.3 Link prediction.
+.2 Generative tasks.
+.2 Interpretable/constrained clustering.
+.2 Learning constraints.
+}\dirtree{%
+.1 Minimal logic expressivity.
+.2 Propositional.
+.2 First order.
+.2 Modal.
+}\dirtree{%
+.1 Direction of reasoning.
+.2 Deductive.
+.2 Inductive.
+.2 Abductive.
+.2 Transductive.
+}
+\columnbreak
+    \dirtree{%
+.1 Type of dynamics.
+.2 Data dynamics.
+.3 Time-independent.
+.4 i.i.d..
+.4 Few-shot.
+.4 Zero-shot.
+.3 Time-dependent.
+.4 Incremental learning.
+.4 Lifelong learning.
+.2 Knowledge dynamics.
+.3 Epistemic dynamics.
+.4 Static knowledge.
+.4 Knowledge discovered over time.
+.3 Truth dynamics.
+.4 Monotonic knowledge.
+.4 Defeasible knowledge.
+}
+
+\dirtree{%
+.1 Knowledge structure.
+.2 Given.
+.3 Reliable.
+.3 Noisy.
+.2 Template-filling.
+.3 Parameter learning.
+.3 General.
+.2 Learned from scratch.
+.2 External.
+.3 Commonsense.
+.3 Skills.
+.3 Online queries.
+}
+\end{multicols}
+
+\fi
+
+\section{Benchmarks for Abstract Visual Reasoning}
+Visual reasoning tasks involving abstract shapes and objects, or simplified artificial scenes, have recently received a lot of attention, as they allow to create controlled environments where perceptual and reasoning skills can be easily tested and compared. In this section we survey the existing benchmarks for Abstract Visual Reasoning, i.e., those reasoning tasks based on images, which do not require real-world understanding or commonsense capabilities. % {\color{blue}We begin our description considering those benchmarks that are mostly related to what we propose, highlighing the differences and novelty of KANDY.}
+
+\paragraph{Kandinsky patterns.}
+%Originally proposed as a method for machine intelligence testing (in contrast with traditional performance benchmarking), 
+Kandinsky patterns~\cite{muller2021kandinsky} are simple, procedurally generable and human understandable figures, consisting of elementary shapes arranged according to a certain criterion, which can be organized into data sets for the assessment of machine perception.
+%
+The KANDINSKYPatterns~\cite{holzinger2021kandinskypatterns} benchmark is a set of three challenges relying on the identification of spatial and Gestalt concepts, posed as binary classification tasks, where positives can be described by a complex rule, while negatives are perceptually very similar, but do not satisfy such rule.
+%%% (tirato su)
+The Elementary Concept Reasoning~\cite{stammer2022interactive} dataset simplifies Kandinsky patterns to the extreme. Images contain a single elementary concept, characterized by three properties, shape, size and (noisy) color, with the aim to assess generalizability and interactive learning of new concepts. The learner observes two images sharing at least one property and is tasked to autonomously produce a disentangled representation (i.e., shape, size and color are encoded by three different representations). At test time, unseen combinations are probed to assess generalizability and interactive learning of new concepts.
+%
+Although ranging from extremely difficult (the original KANDINSKYPatterns challenges) to almost trivial (Elementary Concept Reasoning), Kandinsky patterns provide a tunable synthetic environment which allows to characterize a broad range of machine capabilities, from disentangled raw perception, to Inductive Visual Reasoning~\cite{shindo2023ailp}.
+%Our benchmark is based on Kandinsky-like binary problems, but with a strong emphasis on compositionality, incremental learning, and sparse supervision. % a customizable teacher model.}
+
+\iffalse
+\subsection{Visual Question Answering}%Diagnostic benchmarks for abstract reasoning on images
+
+Visual question answering is a complex multimodal task requiring perception, natural language understanding and spatial reasoning. CLEVR~\cite{johnson2017clevr} is a large diagnostic dataset for visual question answering, with the explicit goal of overcoming the limitation of existing performance-based benchmark, which fail to pinpoint the reasons why a model succeeds or fails in answering a specific question.
+Images in CLEVR are simple 3D scenes, rendered from a scene graph consisting of objects annotated with position (flat on the xy plane) and attributes (shape, color, material, size), and spatial relations with non-trivial semantics. %Camera and light source are randomly placed on the scene and rejection-sampling guarantees that every object is at least partially visibile in every image.
+Questions belong to parametric sets defined by a functional program (i.e., a graph of operations required to retrieve the correct answer) and one or more natural language templates associated with it.
+%For each image, a set of random questions is sampled by choosing a question family (in a way which guarantees the absence of ill-posed or degenerate questions) and grounding its parameters with elements of the scene graph.
+At test time, the camera-agnostic scene graph can be used to assess perceptual skills and the functional program can be used to pinpoint failures in the reasoning process.
+
+The diagnostic capabilities of CLEVR inspired many extensions and adaptations to different domains, such as CLEVR-Ref+~\cite{liu2019clevr},
+%replaces visual question answering with object grounding, by means of referring expressions, natural language constructs which require relational reasoning (e.g., ``the big object next to the yellow one'', which requires grounding both ``object'' and ``one'' with elements from the scene). It is built by replacing the original questions in CLEVR with referring expressions and replacing the output to a segmentation mask, instead of an answer.
+CLEVR-Dialog~\cite{kottur2019clevr},
+%extends CLEVR to multi-round visual question answering, where a questioner unable to perceive the scene asks questions with the goal of reconstructing it and an answerer (the system under testing) has to provide the correct answer, based both on the perceptual input and the dialog history. In this way, CLEVR-Dialog allows to assess visual coreference resolution capabilities and long-term memory interactions.
+%Each datapoint consists of a partial caption, which acts as a seed for the dialog, followed by a sequence of questions generated according to a dialog grammar grounded on the image and the answers provided by a perfect answerer.
+%At each step, the answerer under testing has to provide a single-word answer, thus the entire process can be treated as a classification task.
+%Since visual question answering is a multi-modal task, correctly diagnosing failures related to out-of-distribution and domain shifts is difficult, as they can be caused by changes in features of image, question or concept spaces underlying the data distribution.
+Super-CLEVR~\cite{li2023super},
+%is a CLEVR extension which decomposes domain shifts across four dimensions and evaluates each of them independently.
+%In order to better control domain shifts, Super-CLEVR replaces the simple shapes of CLEVR with 3D models of vehicles, each of which is composed of parts (wheels, wings, doors, etc.). Attributes, like color, are associated to each part of the object, as well as the entire object (e.g., ``blue matte bike with green metallic wheels'').
+%Rendering and question generation follow the same approach as vanilla CLEVR, but for each image, ten object-level and ten part-level questions are generated.
+%The domain shift dimensions investigated by Super-CLEVR are: visual complexity (easy, medium and hard images), question redundancy (CLEVR standard questions with some random redundancy, minimal questions with no redundant information, and over-redundant questions with unnecessarily long functional programs), concept distribution (balanced, unbalanced and long-tailed concepts), and concept compositionality (concepts appear independently from each other, concepts are strongly correlated, e.g., ``cars are always red'').
+%Super-CLEVR provides one dataset for each of these ten scenarios, allowing performance and diagnostic evaluation with respect to the corresponding domain shifts.
+PTR~\cite{hong2021ptr},
+% is another CLEVR extension which replaces simple figures with five real-life objects (chair, table, bed, refrigerator, car) split into complex part-whole hierarchies, consisting of a total of ten thousands parts, extracted from the Partnet benchmark~\cite{mo2019partnet}.
+%Scene graph annotations include ground truth locations, segmentations, properties for all objects and parts, object-object and part-part relations.
+%Questions are related to concept, geometry, analogy, arithmetic, and physics, and the associated functional programs are extended with operators for hierarchical, physics and geometric reasoning.
+%Visual explanations are brittle proxies of the decision making process, which can elude the underlying semantic concepts.
+CLEVR-graph~\cite{clevrgraph2018},
+%is a graph question answering analogous of CLEVR. The reasoning capabilities under investigation are based on graph traversal, logical and arithmetic processing, comparison and counting (of nodes or edges). Like CLEVR, a functional program is available to pinpoint causes of failure.
+%
+and CLEVR-Hans~\cite{stammer2021right}. %The latter is specifically designed to diagnose semantic explanations in interventional frameworks.
+%The benchmark is framed as a classification task, in which classes are determined by rules, with confounder properties which are not spatially separable from the intended rules (e.g., ``the class contains a large cube and a large cylinder'' with large cubes always appearing colored in red in training and validation sets, can be confounded with the shortcut rule ``the class contains a red cube'', in this situation visual explainers would fail to discriminate between correct and confounding explanation).
+%The benchmark is composed of two datasets, one with three classes and simple rules, the other with seven classes and complex rules.
+%As the focus of CLEVR-Hans is interventional, no annotation on the correct class semantics is provided during training, therefore the model under evaluation is characterized in terms of how well it adapts its decision process when a human evaluator deems the explanation inadequate.
+
+%\subsubsection{Diagnostic benchmarks for abstract reasoning on videos}
+
+All the aforementioned benchmarks consist of images, but extensions of CLEVR have been proposed also to perform visual question answering on videos.
+%
+In this context,  CLEVRER~\cite{yi2019clevrer} aims to diagnose temporal and causal reasoning capabilities in videos. Objects can move inside the rendered environment and cause events such as entering/leaving the scene and colliding with each other.
+%Each video is annotated with motion traces and the history of events concerning each object, and questions are associated with the corresponding functional program.
+Questions are extended in order to assess four different capabilities: descriptive (CLEVR-like, e.g., ``What color is the moving object?''), explanatory (e.g., ``Why did the red object start moving?''), predictive (e.g., ``What will happen to the red sphere?'') and counterfactual (e.g., ``Without the blue cylinder, which collision will not happen?'').
+%Samples are produced by first generating a causal structure of collisions, rejecting those with repetitive events, and then rendering the scene for seven seconds (at 25 fps), the first five of which will be presented to the learner, while the last two are used to generate predictive questions.
+%Even for descriptive questions, the ones which can be answered by observing a single frame are discarded, in this way, the functional program is always a tree which requires querying at least one object and one event.
+%Descriptive questions can be answered by a single word and concern object characteristics, as well as motion, collisions and temporal ordering.
+%The other three types are multiple choice questions: in explanatory ones, the question describes an event and the answers require to determine the object or event which caused it, predictive answers relate to post-video events, and counterfactual questions ask whether some event will or will not happen under an hypothetical scenario.
+CLEVRER-Humans~\cite{mao2022clevrer} is a relabeled version of the predictive questions in CLEVRER, which exploits crowd-sourced human annotations to increase diversity of question-answer sets and reduce the bias in the generated causal structures (CLEVRER determines cause-effect relations with an heuristic, which may limit the identification of cause and effect events).
+%Annotation is based on causal event graphs, which are graphs whose nodes are natural language statements about an event and edges indicate causal relations (cause-effect, no relation or not yet labelled). Human annotators solve an event cloze task in the form ``\_ happens because event X'' or ``event X happens because \_'', while being shown a subset of CLEVRER samples. In this way, the causal event graph corresponding to the scene is iteratively filled.
+%After an initial stage, a generative language model, conditioned on the symbolic representation of the scene, is trained on human annotations and is used to augment the rest of the dataset.
+%Finally, after human validation of automatically annotated samples, the causal event graph is converted into multiple-choice questions to restore a CLEVRER-like format.
+ComPhy~\cite{chen2021comphy} is a few-shot learning extension of CLEVRER which introduces physical properties, mass and electric charge, not inferrable from appearance alone.
+%For simplicity and to keep videos easily interpretable by humans, physical properties are discretized: masses can be either heavy or light, and charges can be positive, negative or uncharged. Events are extended to the set: object enters scene, object exits scene, objects collide, objects attract and objects repel.
+%To avoid memorization, three to five objects are generated with random visual and physical properties for each sample, then five videos involving them are rendered.
+%The first four videos are used for learning purposes, allowing the model under testing to associate visual attributes with physical ones, while the last video is used for visual question answering.
+The questions can be descriptive, predictive or counterfactual. % Counterfactual questions involve changes in mass or electric charge.
+%
+CATER~\cite{girdhar2019cater} is instead a temporal reasoning benchmark with focus on compositional actions.
+%Scenes contain objects with CLEVR-like attributes, extended with two shapes, cones and ``snitches'' (an intersection of three toruses), reserved for special objects.
+%Objects can perform actions: rotate on the Y axis (except spheres, which would be rotation-invariant, and special objects), slide (all objects), the sequence of pick up, move and put down (all objects), and the contain action (available only for cones, which can contain one of any other object, including another cone recursively containing something else), which is in fact a spatial relation, modeled as an action to allow a unified semantic description of the scene.
+%Objects in the scene are randomly initialized on a $6\times6$ grid, always guaranteeing the presence of exactly one snitch and at least a cone. During the video, objects execute actions without collisions.
+%Each 300 frames video is divided into slots of 30 frames duration and a random number of symbolic actions are allowed to happen in the discretized slot space (while they are allowed to start and finish with random offsets in rendered space), in this way, events can be described with a simplified Allen's temporal algebra with three operators: before, during and after.
+%CATER defines three tasks in the rendered world: atomic action classification, composite action classification, and snitch localization.
+%The first two are multi-label classifications in which the system under testing is tasked to determine which actions appear in the video, regardless of the timed slot in which they appear, in this sense they can be considered easy and medium debugging tasks. For the first task 14 probabilities are computed for events like ``the sphere slides'', while for the second task 301 probabilities correspond to composite events like ``the cone is picked-placed after the cylinder rotates''.
+%The final task is significantly more difficult and is a localization task, where the model must determine the snitch position in the $6\times6$ grid at the end of the video. Although when the snitch is immediately visible, the task degenerates to a purely perceptual pose estimation task, temporal reasoning and long-term memory are required when the snitch is contained by a cone, which may slide to different positions after the initial containment action.
+% CLEVRTex~\cite{karazija2021clevrtex}  -> Clevr with textures (focus completely sub-symbolic: unsupervised multi-object segmentation, with noise -> camouflage)
+\fi
+
+
+%\subsubsection{Michalski trains}
+
+
+
+\paragraph{Bongard Problems.}
+The Bongard problems~\cite{bongard1970pattern} are a classic cognitive psychology test, in which humans are presented with few images coming from two sets. One of these sets (the positive set) is characterized by an arbitrarily complex property (e.g., ``all figures have lines of constant length'', or ``there are at least two intersecting circles''), while the other (the negative set) contains only images violating it.
+Participants are asked to infer the hidden property characterizing the positive set, and describe it with a natural language statement, by observing a limited number of samples (six positive images and six negative ones, in the original formulation).
+%
+Depeweg et al.~\cite{depeweg2018solving} proposed a purely symbolic solution to the original Bongard problems, based on framing them as a concept communication task (given an underlying rule, over a shared visual vocabulary, the images in the positive and negative sets are the most efficient way to transmit the rule visually). In their work, hand-crafted visual features are extracted to obtain objects and their attributes, and then rules underlying Bongard problems are expressed in terms of expressions generated by a context-free grammar.
+By associating a prior probability to each production rule in the grammar and a posterior based on the observation of an entire Bongard problem (six positive and six negative images), and a pruning strategy based on pragmatic reasoning (if a feature does not appear in the Bongard problem, then the rule does not contain it), they use standard Bayesian inference techniques to iteratively build the most likely rule explaining the samples from the two sets.
+%Out of the original 100 Bongard problems, 61 require ad-hoc feature extractors which would be used for one problem each. Of the remaining 39, sharing the same visual vocabulary, Depeweg et al. are able to solve 35 of them.
+%%% (tirato su)
+%
+Bongard problems are notoriously complex for purely sub-symbolic approaches~\cite{yun2020deeper}, a variety of different settings and scenarios has been recently proposed to address the challenge from a Machine Learning perspective.
+%
+Bongard-LOGO~\cite{nie2020bongard} is a synthetic benchmark directly inspired by the original Bongard problems. %, whereas
+The learning agent is presented with three sets of images generated by LOGO programs, the first two are the traditional Bongard's positive and negative sets, the last one is a smaller query set. The system has to predict whether each of the images from the query set is positive or negative.
+In order to enable few-shot and meta learning capabilities, samples are rotation, translation and scale invariant, requiring minimal perceptual processing. On the other hand, solving the benchmark requires context-dependent representations, analogical reasoning, and reasoning under infinite vocabulary but limited concepts (since patterns are arbitrary, they cannot be memorized, however only a few of them appear inside each sample).
+Samples in Bongard-LOGO are grouped into three categories.
+In free-form shapes samples, concepts in the positive set are associated with a unique random LOGO program, which is subject to a random perturbation in the negative set, with the aim of evaluating extrapolation capabilities.
+In basic shape samples, concepts belong to human-recognizable strokes (e.g., triangles, hourglasses, etc.), the positive set always contains the same two basic shapes, while the negative set contains different combinations, the goal of these samples is to evaluate analogy-based reasoning.
+Finally, in abstract shape samples, basic shapes sharing the same attribute are selected for the positive set (e.g., ``all the shapes are convex'' or ``all the shapes are drawn with dots''), to assess abstract concept discovery and reasoning.
+Bongard-HOI~\cite{jiang2022bongard} is a natural image benchmark for human-object interaction classification. %: both are framed as a few-shot binary classification task. %In this benchmark, positive and negative sets of images of human-object interactions are presented, with the goal of annotating images in a third query set.
+The positive set contains images depicting an action between a human and an object (which can be another human for actions like greeting), the negative set contains hard samples, which have the same objects in the scene, but depict different actions.
+Images are automatically selected from the HAKE~\cite{li2019hake} dataset and validated by skilled human annotators.
+In order to assess systematic generalization, Bongard-HOI provides four test sets, containing seen actions and objects, seen actions but unseen objects, seen objects but unseen actions, and unseen actions and objects.
+Bongard-Tool~\cite{jiang2023bongard} is a similar natural image extension of Bongard-LOGO, which requires stronger semantic knowledge than Bongard-HOI, in the form of few-shot concept induction.
+For each sample, the positive set of Bongard-Tool depicts objects which can perform a certain tool-action (e.g., an hammer can smash nails, but so can unconventional tools like a rock or any other heavy object), while the negative set represents objects unable to act as a tool for the action.
+Like in Bongard-HOI, a third query set is provided and the system under testing is tasked to provide a binary label to each sample.
+An important limitation of Bongard-Tool is the fact that the dataset has been built by exploiting Large Language Models to query a web crawler, without human validation of retrieved results.
+%Moreover, generalization is addressed by splitting the same dataset in two ways, random and with unseen tool-concepts in the test set, this requires retraining on the correct training set to avoid train-test leakage at evaluation. 
+%Our benchmark is indeed based on discriminating images exploiting possibly sparse supervisions, but it is mostly focused on providing conditions for evaluating NeSy learning in an incremental setting, emphasizing compositionality of the progressively presented patterns. Although we relax the extreme few-shot learning characteristics of these benchmarks, we fully preserve the inductive nature of the original Bongard problems, which is lost in these purely discriminative benchmarks.
+
+\paragraph{Raven's Progressive Matrices.}
+%\textcolor{red}{L. Ho tolto la sezione su CLEVR, dato che era rilevante solo ai fini diagnostici (Ho spostato un paragrafo in other benchmarks). Forse farei lo stesso anche con questa sezione...}
+A large body of work is dedicated to benchmarks based on Raven's Progressive Matrices (RPMs)~\cite{raven1938raven}, which are a non-verbal psychometric test for general human intelligence and abstract reasoning, designed to be knowledge-agnostic and to be administered to the widest population possible, regardless of age, cultural background and mental conditions.
+Participants are asked to solve a series of multiple choice questions, by selecting the correct pattern to complete a matrix (usually $3\times3$, missing the bottom right element).
+Questions are presented with increasing difficulty and require counting, reasoning by analogy, pattern completion, visual operations (e.g., subtracting two figures), etc.
+An RPM can be decomposed as a set of problem structures and, optionally, some confounding factors.
+A single problem structure can be further decomposed into an abstract reasoning rule, the object to which it is applied and the attribute which is affected (e.g., ``increase progressively the number of lines'').
+%{\color{blue}In the design of KANDY, we borrow the idea of presenting tasks in a curriculum-like organization.} {\color{red} Raven non è a curriculum, è categorizabile come one-shot reasoning dove il singolo campione ha regole diverse ogni volta. Ciò da cui traiamo spunto è la necessità di fare ragionamenti astratti (con un insieme di primitive più grande del loro)}
+%In the design of KANDY, we borrow the idea of abstract tasks, requiring the use of complex ``reasoning primitives'', presented in an increasingly harder fashion. We however relax the requirement of one-shot analogical reasoning, in favor of a curriculum-like organization where learned skills are reused in future tasks.
+%%% (tirato su)
+Some Machine Learning benchmarks have been inspired by Raven's Progressive Matrices, under the assumption that they can help assess general reasoning capability in machine intelligence as well.
+PGM~\cite{barrett2018measuring} is a benchmark %based on Raven's progressive matrices, 
+which procedurally generates samples based on a symbolic representation of each problem.
+For sample generation, a problem structure is sampled from valid combinations of five reasoning rules, two objects (shapes and lines) and five attributes, and then multiple problem structures are merged (up to four) into a symbolic representation, which consists of constraints on the progressive matrix.
+Finally, free variables (unaffected by the problem structures' constraints) are either kept constant, or randomly varied to introduce a source of distraction.
+In order to assess generalization, they propose eight different train-test splits, ranging from random splits, to various degrees of problem structures not observed at training time.
+%
+RAVEN~\cite{zhang2019raven} is a similar benchmark, which instantiates far more diversified abstract reasoning rules than PGM, providing both a diagnostic symbolic structure %(which in PGMs is used only for generation purposes) 
+and human baselines.
+In RAVEN, problems are generated as constrained sentences belonging to an attributed stochastic image grammar, in this way there is a direct correspondence between the generated image and a symbolic representation, in the form of three parse trees satisfying the same constraints, one for each row. 
+Wrong answers are sampled by introducing random perturbations, which violate the constraints, in the symbolic representation of the correct answer.
+The underlying grammar splits the image into a five-level hierarchy, with the last two levels possessing finite-values attributes (such as type, size and color), including noise.
+Unlike PGM, compositional rules in RAVEN are a faithful reproduction of those identified in the original Raven's Progressive Matrices~\cite{carpenter1990one}.
+The generation procedure of candidate answers in RAVEN is a serious source of bias: as each of the candidates violates only one attribute at the time, it is possible to achieve very high accuracy, simply by selecting the answer with the most frequent combination of attributes, without observing the matrices at all. 
+I-RAVEN~\cite{hu2021stratified} and RAVEN-Fair~\cite{benny2021scale} are more rigorous variants of RAVEN, which solve serious statistical biases in the original dataset.
+%RAVEN-Fair~\cite{benny2021scale} is another variant addressing the same problem, where the answer set is generated by an iterative algorithm. % which, starting from the true solution, changes an attribute at the time from a randomly selected solution (which causes some solutions to be close to the original, while other to be very distinct, due to the larger number of mutations).
+%
+Extrapolation performance in traditional RAVEN-like benchmarks is under-explored, arguably because the way matrices are produced is not fully diagnostic of analogical reasoning, as familiarity of visual stimuli clearly separates perception from reasoning.
+Unicode Analogies~\cite{spratley2023unicode} is a RAVEN-like benchmark, which replaces simple features with Unicode characters, introducing the need of Gestalt perception, and, to some extent, Bongard-like contrastive reasoning, to blur the line between object and feature, forcing models to embed contextual information both for perception and reasoning.
+A first set of hundreds of Unicode characters is manually organized to follow traditional Raven's progressive matrices problem structures at multiple hierarchical levels (global features, local features and relations between ``objects'' within a character), then an automatic procedure is used to annotate thousands of characters.
+Then, samples are generated with a procedure similar to PGM, with some minor differences.
+While there can be invalid (unsolvable or with multiple correct answers) or counterintuitive matrices, the majority of generated samples are human-solvable while being challenging for machine solvers.
+%With the same underlying motivation of Unicode Analogies of a tighter integration between perception and reasoning, 
+In a similar context, V-prom~\cite{teney2020v} extends Raven's progressive matrices to natural images.
+Similar to PGM, matrices are sampled by selecting a combination of relations (simplified to only four: and, or, union and arithmetic progression), objects and attributes (shape, number, etc.), then images are mined from Visual Genome~\cite{krishna2017visual}, while preserving five properties: richness, purity, image quality, visual relatedness, and independence, by automatically evaluating region-level annotations of categories, attributes, and natural language descriptions present in Visual Genome, which are then manually validated.
+To assess generalization, the same types of train-test splits proposed by PGM are used.
+%
+% A closer look at generalisation in raven~\cite{spratley2020closer}
+%   
+%Sandia~\cite{matzen2010recreating}
+%
+%Synthetic RPMs~\cite{wang2015automatic}
+%
+%D-Set and G-Set~\cite{mandziuk2019deepiq}
+%   
+%
+%
+% Survey con anche i benchmark e le architetture che li risolvono:
+%      Deep learning methods for abstract reasoning a survey on raven's progressive matrices~\cite{malkinski2022deep}
+%%%% (tirato su)
+%
+Most benchmarks based on psychometric tests for humans suffer from a major flaw: as they are human-solvable and based on a limited set of rules, it is possible to inject knowledge about the benchmark's structure to achieve extremely high performance. For instance, the Neuro-vector-symbolic Architecture~\cite{hersche2023neuro} solves RAVEN and I-RAVEN with almost perfect performance, but implements the underlying problem structures as hard-coded operators on hyper-dimensional vectors.
+In spite of this issue, the principles underlying psychometric tests can benefit the machine learning community, as they characterize fluid intelligence and abstract generalization capabilities.
+
+\paragraph{Other Benchmarks.}
+%{\color{blue}The scientific literature includes other benchmarks that are different from what we present in this paper, but that are very popular in the context of abstract reasoning and that we review to provide the reader with a complete overview of the currently existing approaches.}
+The literature includes other popular benchmarks in the context of abstract reasoning. %, from which KANDY borrows some ideas.
+CLEVR~\cite{johnson2017clevr} is a large diagnostic dataset for Visual Question Answering, with the explicit goal of overcoming the limitation of existing performance-based benchmarks, which fail to pinpoint the reasons why a model succeeds or fails in answering a specific question.
+Images in CLEVR are simple 3D scenes, rendered from a scene graph, consisting of objects annotated with position %(flat on the xy plane) 
+and attributes%(shape, color, material, size)
+, and spatial relations with non-trivial semantics. %Camera and light source are randomly placed on the scene and rejection-sampling guarantees that every object is at least partially visibile in every image.
+Questions belong to parametric sets defined by a functional program (i.e., a graph of operations required to retrieve the correct answer) and one or more natural language templates associated with it.
+For each image, a set of random questions is sampled by choosing a question family (in a way which guarantees the absence of ill-posed or degenerate questions) and grounding its parameters with elements of the scene graph.
+At test time, the camera-agnostic scene graph can be used to assess perceptual skills and the functional program can be used to pinpoint failures in the reasoning process.
+%Like CLEVR, KANDY contains diagnostic data in the form of symbolic representations for each sample, and ground truth rules for each task, allowing for deeper inspection of models.
+Michalski's trains~\cite{larson1977inductive} are an Inductive Logic Programming toy problem, in which trains are objects composed by a certain number of wagons, characterized by a set of predicates (e.g., open/closed car, containing triangles, three sets of wheels, etc.), and labeled with their traveling direction (``going east'' or ``going west''). The underlying assumption is that the label only depends on the properties of each train. The goal is to determine a set of rules describing every train going in the two directions. %Like Michalski's trains, KANDY is a collection of tasks where a binary decision rule is induced entirely from perceptual stimuli.
+V-Lol~\cite{helff2023v} is a CLEVR-like dataset extending Michalski's trains to perceptual reasoning, with the objective of jointly evaluating exact logical reasoning, noisy scene understanding and abstract generalization.
+Solving V-Lol tasks requires merging inductive reasoning and complex visual perception, underlined by simple visual reasoning (i.e., it does not require gestalt concepts or complex spatial hierarchies).
+Samples are generated procedurally, by sampling different symbolic properties (one east-bound and west-bound trains are selected by rejection-sampling), and then rendered into a 3D scene (either in realistic or a simplified block-mode), with noisy characteristics, such as background, camera distortion, etc.
+Each image is extensively annotated with the coordinates of the train, a binary pixel-wise mask of the properties, bounding boxes and depth information.
+Even though V-Lol is framed as binary classification, instead of Visual Question Answering, samples are annotated with Prolog-like rules (akin to CLEVR functional programs), thus preserving the same diagnostic capabilities for failure cases.
+Sort-of-CLEVR~\cite{santoro2017simple} is a simplified version of CLEVR for visual question answering, where both the perceptual and linguistic components are simplified, to directly assess relational reasoning capabilities. Each image in Sort-of-CLEVR is a Kandinsky-like pattern associated with multiple questions with a fixed structure, half of which require comparing multiple objects (e.g., ``how many objects have the same color of the circle?''). %Although each query is image-specific, their template-based structure allows to learn the semantics of each relation from multiple samples. Compared to Sort-of-CLEVR, KANDY is an orthogonal evaluation framework, where target relations are applied to complex hierarchies of objects, which in turn can be represented as spatial relations built recursively from atomic shapes.
+%
+%Visual genome~\cite{krishna2017visual} -> ontology + dataset of images densely annotated with objects, relations, attributes
+%		
+%HOMAGE~\cite{rai2021home} -> multi view video dataset of indor daily activities annotated with atomic actions and relations between objects
+%		
+%       
+%		
+%BABI task~\cite{weston2015towards} -> 10 question answering tasks with a context and a set of questions -> Di per sé dataset NLP e i ragionamenti sono relativamente shallow (es. X è in stanza 1. X si sposta da stanza 1 a stanza 2. Dov'è X?)
+%
+%\textcolor{red}{Also cite~\cite{li2022softened}???}
+%%%% (tirato su)
+The ARC~\cite{chollet2019measure} benchmark, later renamed ARC-AGI to avoid confusion with other benchmarks, evaluates fluid intelligence both in humans and machine learning methods, without the requirement of language, visual or real-world common sense, or real-world objects knowledge.
+%Although unique in structure and characteristics, ARC can cosebe best categorized as a program synthesis benchmark under a few-shot scenario.
+Both inputs and outputs are discrete-color pixel grids and each sample corresponds to a different task.
+Models are presented with three input/output pairs and are required to draw the output corresponding to a fourth input.
+Each task is built only on few core knowledge priors: object cohesion, object persistence, object interaction via contact, goal-directedness (the input can be modeled as the initial state of a process and the output as the final one), counting, sorting, comparing, repeating, addition, subtraction, elementary geometry and topology.
+ARC-AGI is extremely challenging for Machine Learning approaches, while it can be solved by high-IQ humans with an average of a single trial for each task.
+%
+%The majority of existing benchmarks for visual reasoning combine limited scene variability with large datasets, failing to evaluate data efficiency of the learning process. On the other hand, ARC provides minimal supervision and it requires significant reasoning effort, making it hard to discriminate between reasoning and data-efficiency characteristics.
+%%%% (tirato su)
+%%% (tirato su)
+Currently, ARC-AGI remains unsolved~\cite{chollet2024arc}, with no approach reaching the target performance of $85\%$ accuracy, and traditional Deep Learning methods failing entirely; however test-time training and Program Synthesis guided by Large Language Models currently detain the state-of-the-art of around $50\%$ accuracy, significantly outperforming traditional Program Synthesis. Employing Vision Language Models (VLMs) can further aid resolution by lifting the necessity of engineering a domain-specific language for the ARC-AGI domain, especially when used in combination with specialized techniques, such as Program-driven Chain-of-thought reasoning~\cite{lyu2023faithful}.
+%While sharing many similarities with ARC-AGI, our benchmark addresses unique and complementary challenges in terms of representation learning (such as the binding problem and compositional scene understanding), as well as concept learning over time~\cite{lorello2024continual}.
+CVR~\cite{zerroug2022benchmark} is a synthetic benchmark presenting a large variety of compositional structures, organized in a relatively small dataset.
+Each sample is composed of four images, generated according to two rules, three images following the first (reference rule) and the fourth following the second (odd-one-out rule), the learner is required to solve an outlier detection task, by selecting the image dissimilar from the others.
+Rules are generated procedurally by combining relations between objects (which are closed contours with attributes, such as color, shape, position, etc.) into abstract relations.
+Similar to CLEVR, rules can be represented by a symbolic structure (a graph of relations) and they are not completely arbitrary, following hand-crafted templates instead.
+CLUTRR~\cite{sinha2019clutrr} is a benchmark for inductive reasoning in a natural language setting. The goal of CLUTRR is to assess systematic generalization on relations which can be inferred from short stories, by means of logical reasoning and memory. %While characterized by different modalities, CLUTRR and KANDY share similar features in terms of: relation extraction (kinship graphs in CLUTRR, perceptual trees in KANDY), generation pipeline (both involve exact reasoning by means of a Prolog interpreter), and framing (both are classification tasks). At the same time, there are significant differences which allow the two benchmarks to characterize orthogonal aspects of inductive reasoning: although both CLUTRR stories and KANDY images can contain distracting features, however, CLUTRR is characterized by positive-only instances for each relation, while KANDY contains negative examples as well. Another difference concerns the structure of inducible relations: while CLUTRR is characterized by binary predicates between atomic entities (i.e., the target relation is an edge of the kinship graph), KANDY tasks can relate arbitrarily many objects, which are in turn recursive compositions of simpler shapes (i.e., the target relation is applied to some subtrees of the perceptual tree).
+
+\section{Benchmarks for Learning and Reasoning over Time}
+Learning over time and reasoning about time are recognized as important components of Artificial Intelligence. However, evaluating progress in these areas poses significant challenges, as evaluation frameworks have reached limited maturity, compared to other fields of Artificial Intelligence. Assessment of learning over time is limited by the fact that the majority of frameworks focus on short horizons, with simplified (chain-like) temporal behavior, while temporal reasoning is often evaluated by ad-hoc experiments yielding hard-to-compare insights across different methods.
+
+\paragraph{Traditional Learning Over Time.}
+Traditional benchmarks for Continual Learning aim to evaluate the interaction between an agent and non-stationary streams of stimuli, in order to pinpoint forgetting issues and to characterize the agent's stability-plasticity trade-off. Benchmarks are often built around perceptually simple image classification datasets, in order to decouple the issues caused by non-stationary observations from those caused by a challenging learning setting, reducing the amount of experimental noise which can affect the assessment of a Continual Learning strategy.
+SplitMNIST and Split-Cifar10/100/110~\cite{zenke2017continual,maltoni2019continuous} are popular Class-incremental benchmarks, exposing the agent to class labels disjointly split into five consecutive learning episodes. In a similar fashion, SplitImageNet~\cite{rebuffi2017icarl}, SplitTinyImageNet~\cite{de2021continual}, SplitCUB200~\cite{lomonaco2021avalanche}, Split Omniglot~\cite{schwarz2018progress}, and others, attempt to increase the learning difficulty of Class-incremental learning, by means of more complex perceptual features, longer temporal horizons or a larger number of classes.
+PermutedMNIST~\cite{zenke2017continual} and PermutedOmniglot~\cite{schwarz2018progress} are synthetic Task-incremental benchmarks where classification must be performed against images which are subject to a randomized pixel permutation,  different in each episode. Similarly, RotatedMNIST~\cite{lomonaco2021avalanche} and RotatedOmniglot~\cite{lomonaco2021avalanche} present images with a random rotation chosen for each episode.
+Core50~\cite{lomonaco2017core50} is a hierarchical classification benchmark subject to discrete domain shifts (achieved by capturing images of the same objects under different lighting and background contidions), which can be used for Class-incremental and Domain-incremental experiments.
+ConCon~\cite{busch2024truth} is a confounded visual dataset characterized by a single classification rule, associated with different spurious correlations for each episode. Experiments on ConCon highlight the fact that, in spite of low forgetting, traditional Continual Learning approaches are significantly more susceptible to spurious correlation than baselines observing images in an atemporal fashion, even when equipped with infinite-size memory buffers.
+%
+Traditional benchmarks attempt to model non-stationary observations in an unnatural fashion, by splitting data according to episodes, which, taken in isolation, are still characterized by i.i.d. observations. Stream51~\cite{roady2020stream} is a Class-incremental benchmark characterized by images extracted from consecutive video frames, exposing the agent to a domain shift which is more similar to how humans perceive the world.
+CLEAR~\cite{lin2021clear} addresses both domain shift and concept drift, by exposing the agent to images collected over a long timeframe (10 visual concepts evolving over 10 years).
+%
+Another of the issues of traditional Continual Learning benchmarks is their incremental nature, which does not allow to assess the agent response to cyclic observations. CIR~\cite{hemati2023class} is a benchmarking framework capable of generating streams of repeating observations for Class-based and Domain-based Continual Learning experiments with non-incremental patterns. The CIR generator allows to create streams according to either of two modalities: slot-based generation, which constrains the number of samples observed for each class inside each experience, and sampling-based generation, which is based on defining different probability distributions for each class. Albeit a simple modification of traditional Incremental Learning settings, experiments on CIR expose weaknesses of traditional Continual Learning strategies, when classes are re-observed multiple times during the learning experiences.
+%
+A similar framework with re-occourring classes is SCoLe~\cite{lesort2023challenging}. In SCoLe, streams are protracted for extremely long temporal horizons (potentially infinite), and the agent is able to observe only a subset of classes at the time, with the goal of decoupling the evaluation of short-term catastrophic forgetting and long-term knowledge acquisition. Classes observed inside each episode can be restricted to follow different probability distributions, or a set of hard-coded constraints (such as appearing only for a certain number of episodes).
+%
+Infinite dSprites~\cite{dziadzio2024infinite} is a procedural generator for potentially infinite streams of potentially infinite classes (governed by finite generative factors), with the aim of assessing the goodness of disentangled representations, open-set classification and zero-shot generalization in a Continual Learning setting.
+%CLEAR, CIR, SCoLe and Infinite dSprites are characterized by temporal priors which position them in a setting which is more challenging than traditional Incremental Learning. However, since these priors have limited degrees of freedom, ad-hoc solutions capable of hard-coding such priors can significantly outperform more general Continual Learning strategies. %In contrast, our evaluation framework relies on \LTLf to enforce arbitrary temporal behavior over finite sequences of episodes. %\lsl{This may be a dangerous claim: a model capable of parsing \LTL will still be advantaged over other approaches.}
+
+\paragraph{Learning Over Time with Background Knowledge.} There are limited works lying at the intersection between Continual Learning and Neuro-symbolic Artificial Intelligence. As a result, few tools are available to benchmark reasoning capabilities over time.
+MNAdd-Seq, MNAdd-Shortcut, and CLE4EVR~\cite{marconato2023neuro} characterize the temporal evolution of reasoning shortcuts~\cite{marconato2023not} over simple arithmetic and concept-based reasoning domains framed within traditional Incremental Learning framework, with disjoint class partitions observed one at the time across short temporal horizons.
+%
+%KANDY~\cite{lorello2025kandy} is a benchmarking framework for task-incremental abstract visual reasoning. Instances of KANDY are binary classification datasets generated sequentially, according to a different Prolog rule for each episode. Positive and negative images are Kandinsky patterns, consisting of simple geometric shapes combined recursively according to spatial primitives. User-specified datasets, allow learning agents to be exposed to arbitrarily complex first-order logic classification rules, enabling curriculum-learning and multi-task generalization experiments over a simple perceptual domain.
+%KANDY-Concepts~\cite{lorello2024continual} is an instance of KANDY for concept-based continual learning, where classification rules are built around object properties, and presented to the agent with increasing complexity. %\lsl{Should we say more about KANDY?}
+%Although KANDY and LTLZinc share similar expressivity in terms of first-order reasoning, KANDY is still an incremental framework, where the agent is exposed to each task only once. Moreover, task ordering in KANDY entirely relies on human annotations, while LTLZinc allows to automatically generate multiple curricula, from a single \LTLf formula.
+
+\paragraph{Reasoning About Time.}
+In spite of the increasing popularity of temporal reasoning for Visual Question Answering on videos~\cite{sun2021video} and Chain-of-thought temporal reasoning capabilities of Large Language Models~\cite{xiong2024large,ji2025chain,chu2023timebench}, only a handful of works address the issue of benchmarking temporal reasoning from a Neuro-symbolic perspective.
+Due to the limited availability of evaluation frameworks in the domain of temporal reasoning, novel methods are often validated against synthetic datasets generated ad-hoc. In the context of \LTLf-driven reasoning, we cite the synthetic datasets proposed by Umili et al.~\cite{umili2023grounding,umili2024deepdfa} and Manginas et al.~\cite{manginas2024nesya}, and the one proposed by Yang et al.~\cite{yang2024neuro} for Temporal Point Processes.
+LTLUnsolved254 and LTLPattern126~\cite{hahn2020teaching} are datasets of symbolic traces (of length 254 and 126, respectively) satisfying a collection of human-curated \LTL formulae, with the aim of evaluating trace generation capabilities of Transformer-based architectures.
+Temporal Logic Video~\cite{choi2024towards} is a synthetic collection of datasets for long-horizon activity and object detection in videos, generated as sequences of images, and sampled according to Probabilistic Automata corresponding to five simple \LTL formulae. %Although stemming from similar considerations, Temporal Logic Video and LTLZinc are characterized by significant differences, in terms of expressivity (propositional vs. first order), scope (action understanding vs. generalized temporal learning and reasoning), customizability (static datasets vs. fully-customizable generation framework), and temporal behavior (simple behavior over long sequences vs. complex behavior over possibly short horizons).
+LTLBench~\cite{tang2024ltlbench} is a benchmarking framework and a dataset of two thousands temporal reasoning challenges for the evaluation of Large Language Models. In LTLBench, instances are natural language prompts containing a context and an hypothesis. The goal of the agent in LTLBench is to determine whether the hypothesis holds in the given context. The context is built from a random directed graph encoding event dependencies, while the hypothesis is an \LTL formula generated from the context, by randomly sampling nodes from the graph and \LTL operators until a target formula length is achieved. Both the context and the hypothesis are converted into natural language sentences, according to fixed templates. Finally, the symbolic label is generated by converting the context graph into a labeled transition system and checked against the \LTL formula by means of the NuSMV~\cite{cimatti2002nusmv} Model Checker. %LTLBench and LTLZinc differ considerably, with respect to multiple aspects. Perceptual stimuli in LTLBench are textual prompts with limited variability in terms of structure, while LTLZinc stimuli are image classification datasets of arbitrary complexity. LTLBench formulae are generated randomly without user interaction, on the other hand LTLZinc requires user-defined formulae, which can however encode semantically meaningful behaviors. More significant differences lie on the expressivity (LTLBench relies on atomic propositions, while LTLZinc supports relational constraints over integers and enumerations) and scope (large language models reasoning capabilities vs. generalized temporal learning and reasoning) of the two benchmarks.

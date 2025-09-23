@@ -1,0 +1,332 @@
+\iffalse \section{Introduction}\label{tailor:sec:intro}
+Building systems that integrate learning, reasoning and optimization has long been a dream for artificial intelligence (AI). One of the major challenges within this context is 
+%to evaluate 
+evaluating novel ideas and frameworks on appropriate benchmarks. Too often, the tasks and the datasets that are considered and proposed for experimental evaluation are tailored to specific algorithms or methodologies and limited to ad-hoc scenarios and application domains. More generally, the neuro-symbolic (NeSy) community lacks a generally accepted perspective to test the existing approaches across a variety of different tasks and under different conditions, making deep experimental comparisons hard to obtain~\cite{vermeulen2023experimental}. In addition, when a new system is proposed, it is often tested either on appositely introduced benchmarks, to emphasize the advantages of the novel approach (which is understandable and legitimate), or on well-known ``old-fashioned'' datasets and tasks. While a comparison on such classic benchmarks is useful to get an idea of the performance of an approach for some reference points, new challenges are necessary to drive the development of NeSy systems forward. 
+For example, several well-known datasets in image classification such as MNIST or CIFAR have been used to design a variety of artificial tasks, each time with a specific goal: to propose a setting for continual learning or few-shot learning, to introduce explicit knowledge for reasoning, or to integrate rules and constraints for collective classification~\cite{manhaeve2018deepproblog,marconato2023neuro,barbiero2023interpretable}. These datasets have become real benchmarking frameworks, but their environments are too limited for evaluating the development of systems integrating different paradigms.
+
+To enable better benchmarking in NeSy AI we make the following contributions:
+%our contributions can be summarized as follows: 
+(i) analyzing the current state of the art for what concerns the existing datasets and benchmarks at the intersection of learning, reasoning and optimization; (ii) studying their limitations; (iii) analyzing the existing systems that have been applied to such data; (iv) providing a list of the desiderata that new benchmarks should include; (v) proposing novel ideas for the evaluation and comparison of different approaches. This is all intended to provide insight into the abilities and limitations of current and future learning and reasoning systems.
+\fi
+
+\section{A Categorization of Neural-Symbolic Benchmarking}\label{tailor:sec:sota}
+
+%We will now take a look at current benchmarking in  NeSy AI. 
+Let us start off by taking a look at current benchmarking in  NeSy AI. 
+To do this, we use a categorization of the different types of neural-symbolic tasks %from 
+due to Vermeulen et al.~\cite{vermeulen2023experimental}.
+\paragraph{Distant supervision. }
+In this setting, we have a set of i.i.d. supervised examples, but supervision is not available at the level of the classifier that needs to be trained. Rather, it is available on the logic that is defined over the classifiers. A classic example is that of the MNIST Addition task~\cite{manhaeve2018deepproblog}, where the training examples are tuples of handwritten images, labelled with their sum. The learning task however is to learn to recognize individual digits.
+
+\paragraph{Structured prediction.}
+In this setting, the system needs to classify entities connected by a logical structure (e.g., a graph). Often, a subset of the entities is labelled, while the label of the majority of entities needs to be inferred by taking into account entity-specific attributes, as well as the relational structure connecting them. This is typically done through logic knowledge. An example 
+is the Citeseer~\cite{giles1998citeseer} dataset. Here, individual entities are scientific papers, represented as a bag of the words present in the paper. The goal is to predict the domain to which the paper belongs. The citation graph is also provided, which includes an edge if one paper cites another. The background knowledge is that if one paper cites another, it likely belongs to the same domain.
+
+\paragraph{Knowledge base completion.}
+In this classic setting, we have a knowledge base with missing links between the entities that need to be completed. Although this is generally not a neural-symbolic setting, the idea is that the entities might have formulae attributes, or that a deep learning-based system might learn embedding representations and patterns that are not easily learned by a symbolic system. As a result, enhancing a symbolic data collection with a neural model may produce a significant improvement in solving the task, as shown, e.g., on the Countries~\cite{marra2021relational,maene2024soft} datasets
+
+\paragraph{Learning to optimize.}
+In this setting, the goal is to generate solutions to computationally intractable tasks. The model is trained to approximate the optimal solution. The logic is used to make it more likely that a consistent solution is generated.
+
+% We give an overview of popular neural-symbolic benchmarks in Table~\ref{tailor:tab:benchmark} together with their category, i.e. (D)istant supervision, (S)tructured prediction, (K)nowledge base completion and (O)ptimization.
+
+\subsection*{Overview of Popular Neural-Symbolic Benchmarks}
+
+Below is an overview of popular neural-symbolic benchmarks for each these category.
+
+\begin{itemize}
+    \item Distant supervision (50): Add 2x2, Apply 2x2, BDD-OIA, CelebA, Chess, CLE4EVR, CLEVR, CLEVR-Hans, CLEVR-Math, Context-sensitive grammars, Crop yield prediction, CUB, DBA, DOT, Follow Suit Winner, Handwritten formulae, Hanoi, Indoor scene classification, Kandinsky patterns, Math, Member, MIMIC-II, MNIST Addition, MNIST AddMul, MNIST EvenOdd, MNIST Following Pairs, MNIST Half, MNIST Pairs, MNIST Sequential, MonumAI, Mutagenicity, Operator 2x2, Path, Predictive toxicology, RAVEN, ROAD-R, RPS, Shapeworld, Shortest path, Sudoku grid validity, Tic tac toe, Tic tac toe - next move, Trigonometry, vDEM, Visual Sudoku, V-LOL, VQAR, Well-formed parantheses, Word-algebra problems, XOR
+    \item Structured prediction (5): AbstRCT, Arnetminer, CiteSeer, Cora, IPC
+    \item Knowledge base completion (16): Countries, CQ2SPARQLOWL, EMBER/PE Malware Ontology, FB15k-237, Kinship, MedHop, MMKB, Nations, PharmKG, Pizza ontology, PubMed, Randomly generated KBs, UMLS, WebKB, WikiHop, WN18RR
+    \item Learn to optimize (2): Hardware/Algorithm Dimensioning, Transprecision computing
+\end{itemize}
+
+
+% \begin{table}[ht!]
+% \centering
+% \caption{An overview of the state-of-the-art in neural-symbolic benchmarks} \label{tailor:tab:benchmark}
+% \begin{tabular}{@{}ll@{}} 
+% \toprule
+% Benchmark & Type \\ \midrule
+% AbstRCT & S\\
+% Add 2x2 & D\\
+% Apply 2x2 & D\\
+% Arnetminer & S\\
+% BDD-OIA & D\\
+% CelebA & D\\
+% Chess & D\\
+% CiteSeer & S\\
+% CLE4EVR & D\\
+% CLEVR & D\\
+% CLEVR-Hans & D\\
+% CLEVR-Math & D\\
+% Context-sensitive grammars & D\\
+% Cora & S\\
+% Countries & K\\
+% CQ2SPARQLOWL & K\\
+% Crop yield prediction & D\\
+% CUB & D\\
+% DBA & D\\
+% DOT & D\\
+% FB15k-237 & K\\
+% Follow Suit Winner & D\\
+% Handwritten formulae & D\\
+% Hanoi & D\\
+% Hardware/Algorithm Dimensioning & O\\
+% Indoor scene classification & D\\
+% IPC & S \\
+% Kandinsky patterns & D\\
+% Kinship & K\\
+% Malware Ontology & K\\
+% Math & D\\
+% MedHop & K\\
+% Member & D\\
+% MIMIC-II & D\\
+% MMKB & K\\
+% MNIST Addition & D \\
+% MNIST AddMul & D\\
+% \end{tabular}
+% \hspace{20pt}
+% \begin{tabular}{@{}ll@{}} 
+% MNIST EvenOdd & D\\
+% MNIST Following Pairs & D\\
+% MNIST Half & D\\
+% MNIST Pairs & D\\
+% MNIST Sequential & D\\
+% MonumAI & D\\
+% Mutagenicity & D\\
+% Nations & K\\
+% Nell-995 & K \\
+% Operator 2x2 & D\\
+% Path & D\\
+% PharmKG & K\\
+% Pizza ontology & K\\
+% PlanGPT & S \\
+% Predictive toxicology & D\\
+% PubMed & K\\
+% Randomly generated KBs & K\\
+% RAVEN & D\\
+% ROAD-R & D\\
+% RPS & D\\
+% Shapeworld & D\\
+% Shortest path & D\\
+% Sudoku grid validity & D\\
+% Tic tac toe & D\\
+% Tic tac toe - next move & D\\
+% Transprecision computing & O\\
+% Trigonometry & D\\
+% UMLS & K\\
+% vDEM & D\\
+% Visual Sudoku & D\\
+% V-LOL & D\\
+% VQAR & D\\
+% WebKB & K\\
+% Well-formed parantheses & D\\
+% WikiHop & K\\
+% WN18RR & K\\
+% Word-algebra problems & D\\
+% XOR & D\\
+% Yago3-10 & K \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+
+
+\section{A Comparison of Neural-Symbolic Systems}\label{tailor:sec:systems}
+%\todo[inline]{Robin: Rewrite this. It contains stuff from the original paper.}
+To discuss the state-of-the-art of neural-symbolic systems, we follow the categorization introduced in Marra et al.~\cite{marra2024statistical}. Here, NeSy systems were categorized along 6 dimensions. We exploit some of these dimensions below to provide a rough categorization of neural-symbolic systems. This is followed by an analysis of their capabilities. %An overview of all data  used in this survey is in the appendix.
+An up-to-date version of the tables are available at \url{https://sites.google.com/view/benchmarking-in-nesy-ai}.
+
+
+
+\subsection{Dimensions of Neural-Symbolic Systems}
+\paragraph{Proof- vs model-theoretic. }
+The first dimension we select is the proof-theoretic vs model-theoretic dimension, as this property has a profound impact on the type of inference that is carried out by the systems. Proof-theoretic systems work by finding proofs for a query by chaining together several steps of logical inference using either backwards or forward reasoning. This type of inference thus has a defined direction and is strongly connected to (logic) programming.
+On the other hand, the model-theoretic approach considers the satisfying models for a given logical theory, which is related to SAT-solving.
+%Proof-theoretic approaches work by finding proofs for a query in a logic theory. A proof for a query is a sequence of logical inference steps that demonstrates the truth of that query based on the given program. Typically, forward or backward chaining inference is used to search for proofs for queries. Conversely, the model theoretic perspective on logic is to find a model or truth assignment to the logical atoms that satisfy a given logic theory. An interpretation, or possible world, is a truth-assignment to the propositions (or ground atoms) of the language, and can be uniquely identified with the set of propositions it assigns True (thus considering all the other False). In the model-theoretic perspective, one uses the logic theory as a set of constraints on the propositions, that is, the propositions are related to one another, without imposing a directed inference relationship between them as in forward or backward chaining.
+\paragraph{Logical semantics.} 
+Marra et al.~\cite{marra2024statistical} distinguish between three different levels of semantics: minimal, stable, and classical semantics. If the logical theory is limited to definite clauses, its semantics is generally defined in terms of the least Herbrand model. It is the unique \textit{minimal} set of atoms that can be derived from the clauses.
+When relaxing this constraint allowing any type of clause, this minimal set might not be unique. Instead, the semantics is defined by all \textit{stable} models. Finally, the semantics of arbitrary logical theories is defined by the \textit{classic} semantic definition of First-Order Logic.
+These semantics can be extended by defining a probability distribution over models.
+%which are also closely tied to the used syntax of the underlying logic. First, when the logical theory consists of definite clauses only, the semantics is given by the least Herbrand model. The least Herbrand model of a definite clause theory is unique and it is the minimal w.r.t. set inclusion. It contains all ground facts (from the Herbrand domain) that are logically entailed by the theory. Second, when the logical theory can contain any set of clauses, the semantics is given by the set of all stable Herbrand models. Third, while Horn-clauses are the basis for "pure" Prolog and logic programs, there exist several extensions to this formalism to accommodate negated literals in the condition part of rules or disjunction in the head. A popular framework in this regard is answer set programming (ASP). The previous three levels of semantics are based on Boolean models, i.e. models where each atom is either present (i.e. True) or absent (i.e. False). Differently, fuzzy logic, and in particular t-norm fuzzy logic, assigns a truth value to atoms in the continuous real interval [0, 1]. Logical operators are then turned into real-valued functions, mathematically grounded in the t-norm theory.
+
+
+\paragraph{Structure vs parameter learning. }
+For most machine learning models in a learning setting, the structure is fixed, but the parameters inside the structure have to be learned. For many logic-based methods, however, the structure itself defines the model as there are no other parameters. For neural-symbolic methods, this dichotomy becomes even more important, and whether structure learning is supported becomes a defining aspect of the system. In this paper, all systems support parameter learning, so we only indicate whether they support structure learning.
+%Learning approaches are usually distinguished by whether the structure or the parameters of the model are learned. In structure learning, the learning task is to discover the logical theory. In contrast to structure learning, parameter learning starts with a given logical theory, and only learns the corresponding probabilities or weights. In our selection, all systems support parameter learning, so we only indicate whether a system supports structure learning.
+
+\subsection{Overview}
+In Table~\ref{tailor:tab:systems}, we give an overview of all neural-symbolic systems discussed in this paper. A lot of entries are reused from Marra et al.~\cite{marra2024statistical} with permission.
+
+\begin{table}[ht!]
+\centering
+\caption{All neuro-symbolic systems considered in this survey.}\label{tailor:tab:systems}
+\begin{tabular}{@{}l||ccc|c@{}}
+\toprule
+System & Inference & Semantics & Learning & Benchmark type \\ \midrule
+ \multirow{5}{*}{} & (P)roof & (C)lassical
+ & (P)arameters & (D)istant supervision
+\\
+& (M)odel & (M)inimal &  (S)tructure & (S)tructured prediction
+\\
+& & (S)table & & (K)B completion \\
+& & (P)robability & \\
+& & (F)uzzy & \\  \midrule
+
+$\alpha$ILP~\cite{shindo2023ailp} & P+M & S+P  & P+S & D\\
+Concept Embedding Models (CEM)~\cite{espinosa2022concept} & M & C+P+F & P & D\\
+Deep Concept Reasoner (DCR)~\cite{barbiero2023interpretable} & P &	F &	P+S & D\\
+Deep Logic Models (DLM)~\cite{marra2019integrating} & M & C+P+F & P & D+K\\
+DeepProbLog~\cite{manhaeve2018deepproblog}  & P+M & M+P & P+S & D+S\\
+DeepStochLog~\cite{winters2022deepstochlog}  & P & M+P & P & D+S\\
+Feed-Forward Neural-Symbolic Learner (FFNSL)~\cite{cunnington2023ffnsl} & P & S+F & P+S & D\\
+%Goal Recognition Network (GRNet)~\cite{chiari2023goal} & M & P & P+S & S \\ 
+Greedy Neural Theorem Provers (GNTP)~\cite{minervini2020gntp}  & P & M+F & P+S & K\\
+Lifted Relational Neural Networks (LRNN)~\cite{sourek2018lifted} &P &M+F & P+S & D+K\\
+Logic Explained Networks (LEN)~\cite{ciravegna2023logic} & P+M & C+F	& P+S & D\\
+Logic Tensor Networks (LTN)~\cite{badreddine2022logic} & M & C+F & P & D+K\\
+NeurASP~\cite{yang2020neurasp} & P+M &S+P & P & D \\
+NeuralLP~\cite{yang2017differentiable} &P  & M+F & P & K\\
+Neural Markov Logic Networks (NMLN)~\cite{marra2021neural} & M &C+P & P+S & K\\
+Neural Probabilistic Soft Logic (NeuPSL)~\cite{pryor2023neupsl} & M & C+F & P & D+S\\ 
+NLog~\cite{tsamoura2021neural} & P &M+P & P & D \\
+NLProlog~\cite{weber2019nlprolog} & P & M+P & P+S & K\\
+Neural Theorem Prover (NTP)~\cite{rocktaschel2017end} & P & M+F & P+S & K\\
+%PlanGPT ~\cite{rossettilearning} & M & C+P & P+S & S \\
+Reason-able Embeddings~\cite{adamski2023reason} & M	& C+F & P & K\\
+Relational-Concept Based Models (R-CBM)~\cite{barbiero2023relational} & P+M & P+F & P+S & D+S+K\\
+Relational Neural Machines (RNM)~\cite{marra2021relational} & M & C+P & P & D+S\\
+Relational Reasoning Networks (R2N)~\cite{marra2021relational} & P+M	& C+F & P & S+K\\
+Semantic Based Regularization (SBR)~\cite{diligenti2017semantic} & M & C+F & P & S+K \\
+Scallop~\cite{li2023scallop} & P & M+P & P & D \\
+SLASH~\cite{skryagin2022slash} &  P+M & S+P & P & D\\
+TensorLog~\cite{cohen2020tensorlog} &  P & M+P & P &  S+K\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Categorization}
+Analyzing Table 1 from~\cite{marra2024statistical} only according to the dimensions mentioned above, we now identify three distinct groups of systems. In Table \ref{tailor:tab:cat_systems} we give a per-category overview of these properties with respect to the number of NeSy systems having them.
+%For completeness, the list of all the analyzed systems considered in this paper is reported in \Cref{tab:systems} of \Cref{sec:app_systems}.
+
+\paragraph{Group 1: Model-theoretic systems. }
+The systems that only use a model-theoretic approach are quite uniform. They all use classical logical semantics, and almost none of them supports structure learning. The group is further divided into systems that use a fuzzy or a probabilistic interpretation on top of the classical semantics, with some systems offering (a mix of) both.
+\paragraph{Group 2: Proof-theoretic fuzzy systems.}
+Within the proof-theoretic dimension, we have a clear splitting between fuzzy and probabilistic systems. Most fuzzy systems use minimal semantics, and almost all of them support parameter learning.
+\paragraph{Group 3: Proof-theoretic probabilistic systems.}
+The probabilistic proof-theoretic systems are divided between minimal and stable model semantics. Furthermore, very few of them have support for structure learning. This is potentially due to the more expressive nature of probabilistic inference, making search over the space of rules expensive.
+
+
+\begin{table}[ht!]
+\centering
+\caption{An overview of the properties of the systems in the different categories along the 3 dimensions.}
+\label{tailor:tab:cat_systems}
+\vspace{5pt}
+\begin{tabular}{@{}l|ccc|c|r@{}}
+\toprule
+\multicolumn{1}{c}{Category}     & Proof- vs model-~~ & ~Semantics~ & ~Fuzzy vs probability & Structure learning & \# systems \\ \midrule
+\multirow{3}{*}{} & (P) Proof & (C) Classical & (P) Probability & ($\checkmark$) yes &
+\\
+& (M)odel & (M) Minimal & (F) Fuzzy & (X) no & 
+\\
+& & (S) Stable & & &
+\\ \midrule
+\multirow{5}{*}{model}           & M               & C         & P + F                   &                  X  & 2          \\
+                                 & M               & C         & F                    & $\checkmark$                  & 1          \\
+                                 & M               & C         & F                    &            X        & 4          \\
+                                 & M               & C         & P                    & $\checkmark$                  & 1          \\
+                                 & M               & C         & P                    &               X     & 1          \\
+                                 \hline
+\multirow{5}{*}{fuzzy}           & P               & C         & F                    & $\checkmark$                  & 1          \\
+                                 & P               & C         & F                    &       X             & 1          \\
+                                 & P               & M         & F                    & $\checkmark$                  & 3          \\
+                                 & P               & M         & F                    &                X    & 1          \\
+                                 & P               & S         & F                    & $\checkmark$                  & 2          \\
+                                 \hline
+\multirow{5}{*}{probabibilistic} & P               & M         & P                    &            X        & 1          \\
+                                 & P               & S         & P                    & $\checkmark$                 & 1          \\
+                                 & P               & S         & P                    &             X       & 2          \\
+                                 & P               & M         & P                    & $\checkmark$                 & 1          \\
+                                 & P               & M         & P                    &               X     & 4          \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Capabilities}
+The category of a NeSy system has a large impact on what type of tasks it can be applied to. This is made clear by the benchmarks each system is generally evaluated on. In this section, we exemplify this by indicating which tasks the different categories of systems are evaluated on. The resulting signature is indicative of the capabilities of a system. We count these signatures for each system in the categories listed above ((D) Distant supervision, (S) Structured prediction, (K) Knowledge base completion). We then count how often each task type appears in these signatures. Here, we omitted the optimization-based tasks as they were not used in the systems used in this comparison.
+
+\begin{table}[ht!]
+    \caption{Capabilities of each system category. We report the count of systems evaluated on a combination of (D)istant supervision, (S)tructured predictionm and (K)nowledge base completion tasks.}\label{tailor:tab:capabilities}
+    \begin{subtable}[t]{0.32\linewidth}
+    \caption{Model-theoretic}
+    \centering
+    \begin{tabular}{@{}c|ccc|r@{}}
+    % \toprule
+    \cline{2-5}
+    & D       & S      & K      & \# Systems      \\ \cline{2-5}
+    & X       & X      &        & 2               \\
+    & X       &        & X      & 2               \\
+    & X       &        &        & 2               \\
+      &      & X      & X      & 1               \\
+       &     &        & X      & 2               \\ \midrule
+    \# Systems & 6       & 3      & 5      &                 \\ \bottomrule
+    \end{tabular}
+    \end{subtable}
+    \begin{subtable}[t]{0.32\linewidth}
+    \caption{Proof-theoretic fuzzy}
+    \centering
+    \begin{tabular}{@{}c|ccc|r@{}}
+    \cline{2-5}
+    & D       & S      & K      & \# Systems      \\ \cline{2-5}
+    & X       & X      & X      & 1               \\
+    & X       &        & X      & 1               \\
+    & X       &        &        & 2               \\
+       &     & X      & X      & 1               \\
+      &      &        & X      & 3               \\ \midrule
+   \# Systems & 4       & 2      & 6      &                 \\ \bottomrule
+    \end{tabular}
+    \end{subtable}
+    \begin{subtable}[t]{0.32\linewidth}
+    \caption{Proof-theoretic probabilistic}
+    \centering
+    \begin{tabular}{@{}c|ccc|r@{}}
+    \cline{2-5}
+    & D       & S      & K      & \# Systems      \\ \cline{2-5}
+    & X       & X      &        & 2               \\
+    & X       &        &        & 5               \\
+      &      & X      & X      & 1               \\
+&            &        & X      & 1               \\ \midrule
+ \# Systems &    7       & 3      & 2      &                 \\ \bottomrule
+    \end{tabular}
+    \end{subtable}
+\end{table}
+
+The results of the categorization are shown in Table~\ref{tailor:tab:capabilities}. From subtables (a)-(c) we can see that distant supervision tasks are common among all systems. Also, both model-theoretic and proof-theoretic systems are quite versatile. Proof-theoretic probabilistic systems seem to be mostly focused on distant supervision. This is probably due to the more expensive probabilistic inference that prevents them from being successfully applied to structured prediction and knowledge-base tasks.
+
+
+\section{Limitations of the State of the Art}
+We now discuss some limitations identified in the existing benchmarks, which have led to the recent introduction of novel benchmarks for the NeSy community.
+
+\paragraph{Concerning data.}
+Combining data from different sources, and integrating low-level perceptual stimuli (images, videos, text, signals) with knowledge of any kind remains a cornerstone of most existing NeSy benchmarks. A large part of such benchmarks utilizes images as input, whereas text remains largely under-explored by the NeSy community~\cite{hamilton2022neuro}. The rise of Large Language Models (LLMs) has also rapidly changed the landscape, representing an additional element to account for. The integration of LLMs within NeSy approaches, to address reasoning and optimization tasks, seems a very promising though challenging research direction for the future. Images, instead, are the most frequently used category of input data, since they can be easily manipulated to create synthetic datasets with desired properties and characteristics. Moreover, they can be employed across a wide variety of applications like, e.g., game playing, as in Tic-Tac-Toe, constraint solving in Visual Sudoku, visual question answering as in CLEVR-Hans~\cite{stammer2021right}, plain classification as in Kandinsky Patterns~\cite{muller2021kandinsky}. Knowledge is usually implicit when dealing with certain input data categories, such as knowledge graphs, whereas the definition of specific tasks often requires the use of explicit knowledge, typically in the form of (soft or hard) logic rules: this is the case, for example, for the many benchmarks created, with different goals, from the MNIST dataset, or from CLEVR-based settings, such as CLE4EVR~\cite{marconato2023neuro}. 
+%
+To mitigate the lack of explicit logic knowledge, several approaches have started co-learning a set of logic rules on knowledge graphs, or preprocess the graph with an external rule miner such as AMIE~\cite{galarraga2013amie} or DRUM~\cite{sadeghian2019drum}, and then use them for knowledge graph reasoning~\cite{guo2018knowledge,diligenti2023enhancing}. However, the extracted rules are often very different, and therefore it is difficult to build a comprehensive view of the capabilities enabled by exploiting this knowledge, even if evaluated on the same datasets. 
+
+\paragraph{Concerning paradigms and tasks.} 
+Besides traditional paradigms and tasks, such as classification and reasoning, interesting and novel research directions have emerged, leading to the identification as well as the design, of novel benchmarks. This is the case, for example, for benchmarks inspired by an incremental or continuous learning process, such as MNIST Sequential, CLE4EVR, or KANDY. Yet, we believe that this direction is still largely under-explored, and it actually represents a true element of novelty that should be further considered by future benchmarks, and by systems as well. Moreover, existing benchmarks are often too specific and do not properly model complex and real-world interactions. In this regard, some interesting advances toward a more general perspective have been considered on the crossword application~\cite{zeinalipour2023building}, where knowledge and constraints can be used to solve or generate thematic world puzzles.
+The possibility of having a human-in-the-loop is also a crucial ingredient to enhance explainability and trustworthiness in AI systems. Benchmarking the capability of a system to extract the correct explanation is quite challenging, some recent attempts, however, have been made on specific topics, such as universal algebra~\cite{giannini2024interpretable} and electrical power grids~\cite{varbella2023powergraph}.
+A novel task that has been recently addressed within the NeSy community is that of reasoning shortcuts (e.g., BDD-OIA on autonomous driving predictions, and MNIST Half or Sequential). Although some of the existing benchmarks allow for the definition of tasks in small-data regimes (i.e., few-shot learning), semi-supervised learning, or even unsupervised learning, we also consider this aspect as an open challenge for the design of NeSy benchmarks.
+
+\paragraph{Concerning performance.}
+Measuring the performance of NeSy systems with metrics that can capture properties beyond plain accuracy in classification or pattern recognition still remains an open issue, and it is a highly relevant problem within the NeSy community~\cite{DBLP:conf/nesy/Lorello023}. Among the novel benchmarks proposed within the TAILOR project, there have been some attempts to include performance metrics that take into account properties like interpretability and trustworthiness. This is the case, for example, for the works that have been studying concept learning, as well as reasoning shortcuts~\cite{marconato2023neuro}. In this case, beyond the accuracy of the classification task, the idea is to analyze to what extent the learned representations are aligned with a set of pre-defined concepts. Energy efficiency to reduce the carbon footprint is another dimension that is gaining relevance. In this context, some recently proposed benchmarks, related to hardware dimensioning and transprecision computing, are exploiting energy-related metrics~\cite{francobaldi2023tinderai,spillo2023towards}. 
+
+\paragraph{Concerning implementation.}
+From a more practical perspective, we remark that the comparison of the same system across different benchmarks, or of different systems on the same benchmark, is made difficult by the heterogeneity of the formalisms used to represent data and to model background knowledge. A standardization of frameworks would represent a crucial step to improve such comparisons and to advance the state-of-the-art: this could be enabled by providing APIs to the systems, by providing knowledge in different formats, or by including benchmarks within existing platforms such as OpenML. Ongoing work is looking into creating a knowledge representation language for NeSy that could be used to unambiguously and uniformly represent the knowledge in tasks and benchmarks~\cite{vankrieken2024uller}.
+
+\paragraph{Concerning domains.}
+Analysis of existing datasets may be very useful in highlighting how some domains are under-represented in the panorama of benchmarks usually considered by the NeSy community. Planning is an example of an under-represented domain, as it can easily provide both symbolic data, such as activity traces or maps, and numeric data, coming from perception. Novel benchmarks have been proposed within TAILOR for goal recognition and classic planning~\cite{chiari2023goal}. The medical and legal domains also represent two scenarios where background knowledge provided by experts could be a crucial element to boost the performance of purely data-driven systems: such knowledge could be provided in various formats, including knowledge graphs, ontologies, or even plain natural language. Biomedical data have been proposed as benchmarks for knowledge graph completion (e.g., the PharmKG benchmarks~\cite{zheng2021pharmkg,diligenti2023enhancing}), whereas legal documents (e.g., online terms of service) have been proposed for tasks related to distant supervision. Yet, more opportunities will likely emerge in these fields in the coming years. Regarding textual documents, computational argumentation and argument mining could be an additional research field where symbolic knowledge might be employed, for example, to encode argument models. Some preliminary works using NeSy systems for this kind of task have been proposed~\cite{galassi2021investigating}. Finally, safety-critical applications have also been identified as a domain, where it is common to have hard and soft constraints that intelligent agents have to satisfy when interacting with the environment: even if some work in, e.g., autonomous driving~\cite{stoian2024exploiting}, reinforcement learning~\cite{yang2023safe} or malware detection~\cite{vsvec2024semantic,anthony2024explainable}, has been done in this context, a more extensive and systematic application of NeSy systems in this setting could also be an interesting research direction for the future. 
+
+\iffalse
+\section{Conclusions}\label{tailor:sec:conclusions}
+In this paper, by borrowing relevant criteria from other work, we have given a categorization and overview of popular systems and benchmarks within neural-symbolic AI. We have categorized popular neural-symbolic frameworks into three categories: model-theoretic, proof-theoretic fuzzy, and proof-theoretic probabilistic systems. Our analysis shows that these three systems have distinct strengths and weaknesses, and this is reflected in the type of tasks to which they are applied. Going forward, we will further deepen our analysis of both systems and benchmarks with a more fine-grained analysis of the state-of-the-art.
+\fi

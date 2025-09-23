@@ -1,0 +1,110 @@
+\chapter{Hyper-Parameters for \textsc{LTLZinc-Sequential} Experiments}\label{app:ltlzinchyper}
+
+\section{Neural-only Experiments}\label{app:neur}
+We fix the following hyper-parameters.
+
+\noindent\textbf{Batch size.} 32
+
+\noindent\textbf{Optimizer.} Adam
+
+\noindent\textbf{Learning rate.} $10^{-4}$
+
+\noindent\textbf{Pre-training learning rate.} $10^{-3}$
+
+\noindent\textbf{Epochs.} $50$
+
+\noindent\textbf{Pre-training epochs.} $0$
+
+\noindent\textbf{Learning rate.} $10^{-3}$
+
+\noindent\textbf{Gradient clipping.} $10.0$
+
+\noindent\textbf{Image classification lambda ($\lambda_\textsc{IC}$).} $1.0$
+
+\noindent\textbf{Constraint prediction lambda ($\lambda_\textsc{CC}$).} $1.0$
+
+\noindent\textbf{Next state lambda ($\lambda_\textsc{NSP}$).} $1.0$
+
+\noindent\textbf{Sequence classsification lambda ($\lambda_\textsc{SC}$).} $1.0$
+
+\noindent\textbf{Resample images.} True. This hyper-parameter augments LTLZinc training sets by selecting at each epoch a fresh image (corresponding to the same class) from the original datasets.
+
+\noindent\textbf{\textsc{SC} loss.} Binary cross-entropy
+
+\noindent\textbf{\textsc{CC} module.} MLP-L (64 neurons)
+
+
+The following hyper-parameters are varied across experiments.
+
+\noindent\textbf{Random seed.} 12345, 67890, 88888
+
+
+\noindent\textbf{\textsc{NSP} module.} MLP-L (64 neurons), GRU-L (64 neurons)
+
+\section{Neuro-symbolic Experiments on \textsc{LTLZinc-Sequential-Short-Legacy}}\label{app:main}
+Hyper-parameters not mentioned in this section are the same as those used in the previous sections
+We fix the following hyper-parameters.
+
+\noindent\textbf{Pre-training epochs.} $5$. These epochs are performed with $\lambda_\textsc{IC} = 1.0$, and every other loss disabled ($\lambda_\textsc{CC} = \lambda_\textsc{NSP} = \lambda_\textsc{SC} = 0.0$).
+
+\noindent\textbf{Epochs.} $20$
+
+\noindent\textbf{Image classification lambda ($\lambda_\textsc{IC}$).} $0.1$. This value is used after the end of pre-training.
+
+
+The following hyper-parameters are varied across experiments.
+
+\noindent\textbf{\textsc{CC} module.} MLP-S (8 neurons), MLP-L (64 neurons), Scallop (top-1 proof)
+
+\noindent\textbf{\textsc{NSP} module.} MLP-S (8 neurons), MLP-L (64 neurons), GRU-S (8 neurons), GRU-L (64 neurons), Fuzzy-P (probability semiring), Fuzzy-LP (log-probability semiring), sd-DNNF-P (probability semiring), sd-DNNF-LP (log-probability semiring).
+
+\noindent\textbf{Calibrate.} True, False.
+
+\noindent\textbf{\textsc{SC} loss.} Binary cross-entropy, Semantic Loss of Umili et al.~\cite{umili2023grounding}. %Fuzzy. Fuzzy loss is the one proposed by~\cite{umili2023grounding}. It is a semantic-based regularization term in product t-norm, penalizing:
+%\begin{align*}
+%	\mathcal{L}_{seq}(\mathrm{pred}, \mathrm{labels}) = &1.0 - \bigoplus \mathrm{pred_{[labels == 1]}} + \\&1.0 - \prod \mathrm{pred_{[labels == 0]}}.
+%\end{align*}
+%
+%$\bigoplus$ is a reduction function computing the exclusive-or as: $a \oplus b = (a + b - a * b) * (1.0 - a * b)$.
+
+
+
+
+\section{Error-propagation Experiments}\label{app:abla}
+Hyper-parameters not mentioned in this section are the same as those used in the previous sections.
+We fix the following hyper-parameters.
+
+\noindent\textbf{Pre-training epochs.} $0$.
+
+\noindent\textbf{Calibrate.} True.
+
+The following hyper-parameters are varied across experiments.
+
+\noindent\textbf{\textsc{IC} module.} Perfect label oracle, Flip label oracle, Confidence label oracle.
+
+\noindent\textbf{\textsc{CC} module.} Scallop (top-1 proof), Perfect constraint oracle, Flip constraint oracle, Confidence constraint oracle.
+
+\noindent\textbf{\textsc{NSP} module.} Fuzzy-P, sd-DNNF-P.
+
+\noindent\textbf{Oracle error.} $0.0$ (only for Perfect), $0.05$, $0.1$, $0.2$.
+
+
+
+
+\section{Long-training Experiments}\label{app:seqhyper}
+Hyper-parameters not mentioned in this section are the same as those used in the previous sections.
+Every experiment is repeated using 3 different random seeds. If a run diverges due to NaN or infinite gradients, it is discarded.
+
+\noindent\textbf{Optimizer.} Adam (lr: $10^{-3}$).
+
+\noindent\textbf{Pre-Training Epochs.} 1.
+
+\noindent\textbf{Epochs.} 20 vs. 50.
+
+\noindent\textbf{Pre-Training Epochs.} 1.
+
+\noindent\textbf{Pre-Training Lambdas.} $\lambda_{\textsc{ic}} = 1.0$, $\lambda_{\textsc{cc}} = \lambda_{\textsc{nsp}} = \lambda_{\textsc{sc}} = 0.0$.
+
+\noindent\textbf{Lambdas.} $\lambda_{\textsc{ic}} = 0.1$, $\lambda_{\textsc{cc}} = \lambda_{\textsc{nsp}} = \lambda_{\textsc{sc}} = 1.0$.
+
+

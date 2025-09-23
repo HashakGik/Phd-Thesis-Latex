@@ -1,0 +1,43 @@
+\chapter{Hyper-parameter Tuning for \textsc{KANDY-Induction} Experiments}\label{app:kandyhyper}
+
+The validation splits of \textsc{KANDY-Induction} were used to measure \textsc{Average Accuracy} (further averaged over $3$ runs with different initialization, in the case of Neural models) of each target model, varying the values of a number of key hyper-parameters over fixed grids.
+
+\section{Neural Models}
+\label{sec:appendix_hyper}
+
+\noindent\textbf{Batch size.} $\{1, 16\}$
+
+\noindent\textbf{Optimizer.} Adam vs. Stochastic Gradient Descent (SGD)
+
+\noindent\textbf{Learning rate.} $\{10^{-4}, 10^{-2}\}$
+
+\noindent\textbf{Epochs.} $\{1, 10\}$ (For \textsc{Continual-online} epochs are fixed to 1)
+
+\noindent\textbf{Replay buffer.} Not used vs. Class-balanced Reservoir Sampling with buffer size = 200
+
+\section{Symbolic Models}
+For symbolic baselines, we performed two separate grid searches for either curriculum. Experiments were repeated with two different engines (Aleph and Popper), on two encodings (natural, \textsc{Nat} and pointer, \textsc{Ptr}) and three background knowledge sizes (minimal, \textsc{Min}, mid-size, \textsc{Mid}, large). Due to different behavior of timeout parameters of the two engines, we impose a hard constraint on time limit by forcefully terminating the engines on timeout.\footnote{This has the side effect of losing any-time partial solutions, but their performance proved to be unsatisfactory in preliminary tests with longer timeouts.}
+%
+Unlike experiments with neural models, data for symbolic-model-based experiments was not re-balanced prior to training, moreover, as both Aleph and Popper engines are deterministic, experiments were not repeated multiple times.
+
+\noindent\textbf{Maximum literals.} 40
+
+\noindent\textbf{Minimum acceptable accuracy.} 0.5
+
+\noindent\textbf{Maximum number of false positives.} 5
+
+\noindent\textbf{Layers of new variables.} 5
+
+\noindent\textbf{Minimum number of positives covered by each rule.} 2
+
+\noindent\textbf{Proof depth.} 15
+
+\noindent\textbf{Nodes to explore during search.} 20000
+
+\noindent\textbf{Timeout.} 1800 seconds (\textsc{KANDY-Induction-1}), 3600 seconds (\textsc{KANDY-Induction-2})
+
+\noindent\textbf{Maximum variables in a clause.} $\{6, 12\}$ (\textsc{KANDY-Induction-1}), $\{12, 15\}$ (\textsc{KANDY-Induction-2})
+
+\noindent\textbf{Maximum clauses in the theory.} 1 (\textsc{KANDY-Induction-1}), $\{2, 4\}$ (\textsc{KANDY-Induction-2})
+
+\noindent\textbf{Maximum literals in a clause.} 6 (\textsc{KANDY-Induction-1}), $\{6, 12, 15\}$ (\textsc{KANDY-Induction-2})

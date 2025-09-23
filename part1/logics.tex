@@ -1,0 +1,96 @@
+\chapter{Logics}\label{chap:logics}
+In this chapter we briefly summarize syntax and semantics of the logic formalisms which will be used throughout the thesis.
+
+\section{First-order Logic}
+First-order logic (FOL) is a formal system expressing properties of logic statements (predicates) over a non-logical theory.
+Let $\textit{Cos} = \left\{a, b, c, \dots\right\}$ be a finite set of \textit{constants}, $Var = \left\{X, Y, Z, \dots\right\}$ an enumerable set of \textit{variables}, and $\textit{Fun} = \left\{f, g, h, \dots\right\}$ a finite set of functor symbols, then the set of \textit{terms} $\textit{Ter} = \left\{t_1, t_2, t_3 \dots\right\}$ is the smallest set satisfying the syntax:
+\begin{center}
+	\begin{bnf}
+		$T$ ::=
+		| $a$ : for every $a \in \textit{Cos}$
+		| $X$ : for every $X \in \textit{Var}$
+		| $f(\tau)$ : for every $f \in \textit{Fun}$
+		;;
+		$\tau$ ::= $T$
+		 | $\tau$, $T$ : (tuple of terms).
+	\end{bnf}
+\end{center}
+Symbols in $\textit{Ter}$ are interpreted according to some non-logic meaning (e.g., $Fun$ may contain the symbol $+$, interpreted as arithmetic sum\footnote{For readability purposes, common functors will be typeset in infix notation, i.e., $t_1 + t_2 + \dots + t_n$ is equivalent to $+(t_1, t_2, \dots, t_n)$.}).
+
+Let $\textit{Pred} = \left\{\texttt{p}, \texttt{q}, \texttt{r}, \dots\right\}$ be a finite set of \textit{predicate} symbols, then a well-formed FOL formula $\varphi$ is given by the syntax:
+\begin{center}
+	\begin{bnf}
+		$\varphi$ ::= $\top$ : (true)
+		| $\texttt{p}(T)$ : (atomic predicate)
+		| $(\neg \varphi)$ : (negation)
+		| $(\varphi \wedge \varphi)$ : (conjunction)
+		| $(\varphi \vee \varphi)$ : (disjunction)
+		| $(\varphi \rightarrow \varphi)$ : (implication)
+		| $(\varphi \leftrightarrow \varphi)$ : (double implication)
+		| $(\forall X)(\varphi)$ : (universal quantification)
+		| $(\exists X)(\varphi)$ : (existential quantification).
+	\end{bnf}
+\end{center}
+Unary operators $\left\{\neg, \forall, \exists\right\}$ are right-associative and take precedence over other operators. Binary operators have the following precedence (higher first): conjunction, disjunction, implication, double implication. We will omit parentheses when precedence is clear from the context. The set $\left\{\neg, \wedge, \forall\right\}$ is functionally complete, and every other operator can be defined by means of equivalence axioms.
+Variable occurrences in a formula are said to be bound to a quantifier over the same variable if they appear within the quantifier's scope, otherwise they are said to be free.
+For example, consider the formula $\texttt{p}(X, Y) \rightarrow (\forall X)(\texttt{q}(Y) \wedge (\exists Y)(\texttt{r}(X,Y)))$, containing two variables $X$, $Y$, occurring five times. Variable $X$ occurs free in $\texttt{p}(X, Y)$ (since it is not quantified) and bound in $\texttt{r}(X, Y)$ (as it is guarded by $\forall X$), while variable $Y$ is free in $\texttt{p}(X, Y)$ and $\texttt{q}(Y)$ (in spite of being within the scope of $\forall X$), but bound in $\texttt{r}(X, Y)$.
+
+FOL semantics is defined on the syntactic structure of well-formed formulae, in terms of an environment tuple $\left\langle\sD, \gI, \gV\right\rangle$, where $\sD$ is a non-empty set (discourse domain), $\gV$ is an interpretation function mapping occurrences of free variables to a value in $\sD$, and $\gI$ is an interpretation function mapping non-variable symbols to:
+\begin{align*}
+	&\gI(a) \in \sD & \text{ for } a \in \textit{Cos} \quad &(value)\\
+	&\gI(f): \sD^n \mapsto \sD & \text{ for } f \in \textit{Fun}\quad & (function)\\
+	&\gI(\texttt{p}) \subseteq \sD^n & \text{ for } \texttt{p} \in \textit{Pred}\quad & (relation).
+\end{align*}
+An environment $\left\langle\sD, \gI, \gV\right\rangle$ satisfies a formula $\varphi'$, denoted as $\left\langle\sD, \gI, \gV\right\rangle \models \varphi'$, if and only if:
+\begin{align*}
+	\left\langle\sD, \gI, \gV\right\rangle &\models \varphi' = \texttt{p}(t_1, \dots, t_n) &\text{iff } \gI(t_1), \dots, \gI(t_n) \in \gI(\texttt{p})\\
+	\left\langle\sD, \gI, \gV\right\rangle &\models \varphi' = \neg\varphi &\text{iff } \left\langle\sD, \gI, \gV\right\rangle \not \models \varphi\\
+	\left\langle\sD, \gI, \gV\right\rangle &\models \varphi' = \varphi_1 \wedge \varphi_2 &\text{iff } \left\langle\sD, \gI, \gV\right\rangle \models \varphi_1 \text{ and } \left\langle\sD, \gI, \gV\right\rangle \models \varphi_2\\
+	\left\langle\sD, \gI, \gV\right\rangle &\models \varphi' = \forall X \varphi &\text{iff } \left\langle\sD, \gI, \gV \setminus \left\{(X, \gV(X))\right\} \cup \left\{(X, d)\right\} \right\rangle \models \varphi\\
+	& & \text{for every } d \in \sD.\\
+\end{align*}
+%
+Equivalence axioms define other operators as: $\varphi_1 \vee \varphi_2 \equiv \neg (\neg \varphi_1 \wedge \neg \varphi_2)$ (disjunction), $\varphi_1 \rightarrow \varphi_2 \equiv \neg \varphi_1 \vee \varphi_2$ (implication), $\varphi_1 \leftrightarrow \varphi_2 \equiv (\varphi_1 \rightarrow \varphi_2) \wedge (\varphi_2 \rightarrow \varphi_1)$ (double implication), and $\exists X \varphi \equiv \neg (\forall X \neg \varphi)$ (existential quantification).
+
+\section{Linear Temporal Logic over Finite Traces}
+Linear temporal logic (\LTL)~\cite{pnueli1977temporal} is a modal logic capable of expressing temporal properties along discrete traces, in terms of reachability of states.
+Linear temporal logic over finite traces (\LTLf)~\cite{de2013linear} is the finite realization of \LTL.
+Given a set of atomic propositions $\sP = \left\{\texttt{p}, \texttt{q}, \dots\right\}$, a well-formed \LTLf formula $\varphi$ possesses the following syntax:\footnote{\LTLf and \LTL share the same syntax, with the exception of the $\ltlweaknext$ operator (not present in \LTL).}
+\begin{center}
+	\begin{bnf}
+		$\varphi$ ::=
+		| $\top$ : (true)
+		| \texttt{p} : (atomic proposition)
+		| $(\neg \varphi)$ : (negation)
+		| $(\varphi \wedge \varphi)$ : (conjunction)
+		| $(\varphi \vee \varphi)$ : (disjunction)
+		| $(\varphi \rightarrow \varphi)$ : (implication)
+		| $(\varphi \leftrightarrow \varphi)$ : (double implication)
+		| $(\ltlnext \varphi)$ : (next)
+		| $(\ltlweaknext \varphi)$ : (weak next)
+		| $(\ltlglobally \varphi)$ : (globally)
+		| $(\ltlfinally \varphi)$ : (finally)
+		| $(\varphi \ltluntil \varphi)$ : (until)
+		| $(\varphi \ltlreleases \varphi)$ : (releases).
+	\end{bnf}
+\end{center}
+Unary operators $\left\{\neg, \ltlnext, \ltlweaknext, \ltlfinally, \ltlglobally\right\}$ are right-associative and take precedence over the other operators. Binary temporal operators $\left\{\ltluntil, \ltlreleases\right\}$ have higher precedence than binary logic connectives (which follow the usual precedence rules).
+We will omit parentheses when precedence is clear from the context.
+The set $\left\{\neg, \wedge, \ltlnext, \ltlweaknext, \ltluntil\right\}$ is functionally complete, and every other operator can be defined by means of equivalence relations.
+
+Let $\pi^{(t)} \in 2^\sP$ be an interpretation (i.e., a truth assignment for all the variables in $\sP$ at time-step $t$) and $\pi = \pi^{(1)}\pi^{(2)}\dots\pi^{(n)}$ be a finite trace (i.e., a sequence of $n < \infty$ interpretations), then the semantics of \LTLf is defined by induction on the syntactic structure. A trace $\pi$ satisfies the formula $\varphi'$ at time-step $t \in \left\{1, 2, \dots, |\pi|\right\}$, denoted as $\pi, t \models \varphi'$, if and only if:
+\begin{align*}
+	\pi, t &\models \varphi' = \texttt{p} &\text{iff } \texttt{p} \in \pi^{(t)}\\
+	\pi, t &\models \varphi' = (\neg \varphi) &\text{iff } \pi, t \not\models \varphi\\
+	\pi, t &\models \varphi' = (\varphi_1 \wedge \varphi_2) &\text{iff } \pi, t \models \varphi' = \varphi_1\text{ and } \pi, t \models \varphi_2 \\
+	\pi, t &\models \varphi' = (\ltlnext \varphi) &\text{iff } \pi, t + 1 \models \varphi \text{ and } t < |\pi| \\
+	\pi, t &\models \varphi' = (\ltlweaknext \varphi) &\text{iff } \pi, t + 1 \models \varphi \ \text{or} \ t = |\pi| \\
+	\pi, t &\models \varphi' = (\varphi_1 \ltluntil \varphi_2) &\text{iff for some } t' \leq |\pi|:\ \pi, t' \models \varphi_2 \\ &&\ \text{and for all } t'' \leq t': \ \pi, t'' \models \varphi_1.
+\end{align*}
+The satisfiability of the entire formula, with respect to the given trace, is $\pi \models \varphi' \text{ iff } \pi, 1 \models \varphi'$ (i.e., the first time-step of the trace satisfies the formula). Intuitively, the semantics of \LTLf can be understood as follows: $\ltlnext \varphi$ is true if $\varphi$ is true in the next interpretation of the trace (which must exist), similarly $\ltlweaknext \varphi$ is true either if $\varphi$ is true in the next interpretation, or the trace has ended, $\varphi_1 \ltluntil \varphi_2$ is true if $\varphi_1$ holds true at least up to the first occurrence of $\varphi_2$ (which must happen at some point in the trace).
+
+Derived operators are: $\ltlfinally \varphi \equiv \top \ltluntil \varphi$ ($\varphi$ will become true sometime in the future), $\ltlglobally\varphi \equiv \neg \ltlfinally \neg \varphi$ ($\varphi$ is always true) and $\varphi_1 \ltlreleases \varphi_2 \equiv \neg (\neg \varphi_1 \ltluntil \neg \varphi_2)$ ($\varphi_2$ must hold up to, and including, the first occurrence of $\varphi_1$, if $\varphi_1$ never becomes true, $\varphi_2$ must be true forever).
+There exist well-known patterns encoding common temporal properties in \LTL formulae~\cite{dwyer1998property}, however semantic differences between \LTL and \LTLf can lead to counter-intuitive and hard to identify behaviors, especially for formulae describing re-occurring events.
+For example, the formulae $\ltlfinally\ltlglobally \varphi$ and $\ltlglobally\ltlfinally \varphi$ have different meaning in \LTL (``at some point in the future, $\varphi$ will become true and never return to a false state``, and ``$\varphi$ will become true infinitely often'', respectively), while in \LTLf they are equivalent (``$\varphi$ is true in the final time-step'').
+%
+Traces of propositional assignments can be interpreted as strings over the alphabet $2^\sP$ and \LTLf semantics can be re-defined in terms of language membership. The class of languages which can be defined by \LTLf formulae is a proper subset of regular languages~\cite{de2013linear}, and there exist $\mathsf{PSPACE}$-complete algorithms to convert a formula into a deterministic finite state automaton (DFA). %Symbolic finite state automata (SFA)~\cite{veanes2010symbolic} extend DFAs to infinite alphabets, by replacing transition labels with expressions interpreted over Boolean algebras. Problems in LTLZinc are encoded by an extension of \LTLf to constraints over finite domains~\cite{nethercote2007minizinc}, meaning that they are still formally equivalent to DFAs (as every possible combination of assignments is still finite), however an SFA-based representation is exponentially more concise.

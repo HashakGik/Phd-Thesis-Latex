@@ -1,0 +1,409 @@
+\chapter{The LTLZinc Benchmark}
+\label{chap:ltlzincbench}
+
+In this chapter we introduce \textsc{LTLZinc}, a benchmarking framework covering a variety of different problems, against which Neuro-symbolic and Continual Learning methods can be evaluated along the temporal and constraint-driven dimensions. Our framework generates expressive Temporal Reasoning and Continual Learning tasks from a Linear Temporal Logic over Finite Traces specification over MiniZinc~\cite{nethercote2007minizinc} constraints, and arbitrary image classification datasets. Fine-grained annotations allow multiple Neural and Neuro-symbolic training regimes on the same generated datasets. \textsc{LTLZinc} is released publicly\footnote{\url{https://github.com/continual-nesy/LTLZinc}} as a generator and as multiple collections of ready-to-use datasets. Experiments of Chapter~\ref{chap:ltlzincseq} and Chapter~\ref{chap:ansya} will rely on such datasets. The content of this chapter is adapted from our IJCAI2025 conference paper~\cite{lorello2025neuro} and our journal paper currently under review at JAIR~\cite{lorello2025ltlzinc}.
+
+\section{\textsc{LTLZinc} at a glance}
+\textsc{LTLZinc} positions itself in our taxonomy as a benchmark dealing with \textbf{time-series of images}, covering \textbf{multiple families of tasks} with \textbf{modal} expressivity (relational and temporal logic). Annotations in \textsc{LTLZinc} allow multiple \textbf{reasoning directions}. Data can be observed either in a \textbf{static} or \textbf{continual} fashion, with ground truth which can be either \textbf{given} or \textbf{learned from observations}. Background knowledge remains \textbf{static over time}.
+%
+The following are the main use cases of \textsc{LTLZinc}:
+\begin{enumerate}
+	\item \textbf{Learning and Reasoning over Sequences.} \textsc{LTLZinc} can generate datasets of sequences conforming to arbitrary relational-temporal specifications. These can be used as the base for multiple temporal Neuro-symbolic tasks:
+	\begin{itemize}
+		\item \textbf{Knowledge-driven Sequence Classification.} \textsc{LTLZinc} allows to generate binary Sequence Classification tasks according to known symbolic rules, which can be exploited by a learning agent to make decisions.
+		\item \textbf{Temporally-distant Supervision.} Neuro-symbolic Distant Supervision can be performed across multiple steps of reasoning unfolding over time.
+		\item \textbf{Constraint Induction over Time.} The relational-temporal nature of \textsc{LTLZinc} specifications allows to induce missing relational knowledge from temporal observations.
+	\end{itemize}
+	\item \textbf{Continual Learning with Background Knowledge.} \textsc{LTLZinc} can generate a sequence of datasets which generalize Incremental Learning to a broader class of problems with complex temporal behavior. \textsc{LTLZinc} specifications can be exploited as background knowledge for a variety of Continual Learning tasks:
+	\begin{itemize}
+		\item \textbf{Class-continual Learning.} Novel and already observed classes can be encountered according to complex temporal dynamics.
+		\item \textbf{Task-continual Learning.} Curricula of tasks can be defined in terms of task invariants and their temporal behavior.
+		\item \textbf{Domain-continual Learning.} Temporal specifications can describe complex stimulus-label mappings evolving over time.
+	\end{itemize}
+\end{enumerate}
+
+\section{The LTLZinc Framework}\label{ltlzinc:sec:ltlzinc}
+We hereby introduce our benchmarking framework for relational and temporal learning and reasoning, covering notation, problem definition, the generation algorithm and its limitations in terms of computational complexity.
+
+\paragraph{Notation.} Let $\gX = \{A: \sX_A, \dots, K: \sX_K\}$ be a set of $K$ \textit{perceptual domains}, each associated to a \textit{symbolic domain} $\gY_j$. As an example, $\gX_A$ and $\gX_B$ could be the domains of MNIST Digits and Fashion-MNIST articles~\cite{xiao2017fmnist}, respectively, whereas $\gY_A$ and $\gY_B$ the corresponding sets of (symbolic) classes. We will indicate with $x_j^{(t)} \in \gX_j$ and $y_j^{(t)} \in \gY_j$ a \textit{perceptual stimulus} and its \textit{symbolic label} observed at discrete time $0 \leq t < T$.
+Let $\gC$ be a \textit{mapping of relational constraints over finite domains} from a string identifier to a predicate $\texttt{p/k}$\footnote{Throughout this work, we will consider constraints in $\gC$ to have MiniZinc semantics.} of arity $1 \leq k < K$ between symbolic labels; at each time-step $t$, the tuple of labels $\langle y^{(t)}_A, y^{(t)}_B, \dots, y^{(t)}_{K} \rangle$ corresponding to a certain stimulus $\langle x^{(t)}_A, x^{(t)}_B, \dots, x^{(t)}_{K} \rangle$ may or may not satisfy some predicates in $\gC$.
+For instance, let us consider the following example:
+\begin{align*}
+\gX\colon\quad&A, B, C: [\mathimg{mnist0},\mathimg{mnist9}]\\
+ \gY\colon\quad&A, B, C: [0,9]\\
+ \gC\colon\quad&\texttt{sum}(A, B, C): A+B=C\\
+ &\texttt{same}(A, B, C): \texttt{all\_equal}([A, B, C]).
+\end{align*}
+We may observe the following perceptual stimuli $\gX^{(t)} = \langle img_A, img_B, img_C\rangle$ (mapped to their corresponding symbolic labels $\gY^{(t)} = \langle A, B, C\rangle$) at four different time-steps $\gX^{(0)} = \langle\mathimg{mnist3}, \mathimg{mnist5},\mathimg{mnist8}\rangle, \gX^{(1)} = \langle\mathimg{mnist2}, \mathimg{mnist5},\mathimg{mnist3}\rangle, \gX^{(2)} = \langle\mathimg{mnist4}, \mathimg{mnist4},\mathimg{mnist4}\rangle, \gX^{(3)} = \langle\mathimg{mnist0}, \mathimg{mnist0},\mathimg{mnist0}\rangle$. For each of them, we can check which relations in $\gC$ hold: $[\{\texttt{sum}: \top, \texttt{same}: \bot\}, \{\texttt{sum}: \bot, \texttt{same}: \bot\}, \{\texttt{sum}: \bot, \texttt{same}: \top\}, \{\texttt{sum}: \top, \texttt{same}: \top\}]$. 
+%%%%
+Let $\gF$ be a \textit{temporal specification}, defined as an \LTLf formula over the set of relations in $\gC$,  grounded with values in $\gY$. For example, $\gF: \ltlglobally(\texttt{sum}(A,B,C) \leftrightarrow \ltlnext \texttt{same}(A,B,C))$.\footnote{We will omit terms from predicates appearing in $\gF$ (e.g., $\ltlglobally(\texttt{sum} \leftrightarrow \ltlnext \texttt{same})$) when the grounded variables are clear from the context.} This formula models the fact that it will always be true that $\texttt{sum/3}$ is satisfied in a given time-step if and only if the next one satisfies $\texttt{same/3}$. 
+The tuple $\langle \gX, \gY, \gC, \gF \rangle$ allows the definition of arbitrary finite-length linear-time first-order reasoning settings.
+
+\paragraph{LTLZinc Problems.} An \textsc{LTLZinc} problem is the tuple $\langle \gX, \gY, \gC, \gF\rangle$, instantiated over a finite time horizon $T$ as a collection of observations in either of two modalities.
+In \textbf{sequential mode}, \textsc{LTLZinc} produces a \textit{dataset of sequences}, composed of perceptual stimuli $\gS_\gX = [\langle x_A^{(t)}, \dots, x_{K}^{(t)}\rangle]_{t=0}^{T-1}$, and annotations: $\gS_\gY = [\langle y_A^{(t)}, \dots, y_{K}^{(t)}\rangle]_{t=0}^{T-1}$ (symbolic label annotations), $\gS_\gC = [\langle c_0^{(t)}, \dots, c_{|\gC|-1}^{(t)}\rangle]_{t=0}^{T-1}$ (constraint annotations, $c_i^{(t)} \in \sB$), and $\gL \in \sB$ (sequence label annotation, true if and only if the sequence satisfies $\gF$). Note that the first three are sequential annotations, associated with each time-step of the input stimulus, while the last one is a single binary value associated with the entire sequence. 
+%
+Conversely, in \textbf{continual mode}, an LTLZinc problem is processed into a \textit{sequence of datasets} $\mathcal{D} = [\langle \gX^{(t)}, \gY^{(t)} \rangle s.t. \gY^{(t)} \models \gC^{(t)}]_{t=0}^{T-1}$, given $[\gC^{(t)}]_{t=0}^{T-1} \models \gF$.
+In practice, this means that we first generate a sequence of constraint interpretations satisfying the temporal specification, and then, for each time-step, we sample an image classification dataset $\gD^{(t)} = \langle \gX^{(t)}, \gY^{(t)}\rangle$ coherent with the assignment.
+%
+In both cases, the problem definition $\langle \gX, \gY, \gC, \gF\rangle$ can be exploited as background knowledge.
+
+\paragraph{Data Generation.} \textsc{LTLZinc} specifications augment \textsc{LTLZinc} problems with auxiliary information.
+Arbitrary \textit{dataset splits} can be defined with different characteristics (e.g., a test split can present out-of-distribution images, or additional class labels), by means of \textit{domain mappings}, which associate a split with different datasets $\langle \gX_{split}, \gY_{split}\rangle$.
+\textit{Streams} are mappings $variable\_name \mapsto \langle \gX, \gY \rangle$, which allow dynamic associations between perceptual inputs $\langle \gX_i, \gY_i \rangle$ and their grounding in the temporal specification $\gF$, allowing one-to-one, one-to-many or many-to-many associations between variables and perceptual stimuli observed by the agent. Streams allow to model \textit{partial observability over time}, which can be beneficial both to describe incomplete knowledge or to model domain drifts. Given a constraint, e.g., $\texttt{p}(A,B): A = B$, and a formula with stream specifications, e.g., $\texttt{p}(A \mapsto \langle\gX_1, \gY_1\rangle, B \mapsto \langle\gX_2, \gY_2\rangle) \wedge \ltlfinally \texttt{p}(A \mapsto \langle\gX_3, \gY_3\rangle, B \mapsto \langle\gX_4, \gY_4\rangle)$,\footnote{For readability purposes, we will omit stream specifications when the mapping is one-to-one, i.e., $\texttt{p}(A)$ implicitly means $\texttt{p}(A\mapsto\langle\gX_A, \gY_A\rangle)$. In our software, streams are decoupled from temporal formulae, for more readable \textsc{LTLZinc} specification files.} the \textsc{LTLZinc} generator will replace the tuple $(A,B)$ with the domains corresponding to each time-step.\footnote{Internally, different streams applied to the same constraint are converted to different constraints by means of syntactic substitution. The example above is equivalent to $\texttt{p}_0(W,X) \wedge \ltlfinally \texttt{p}_1(Y,Z)$, with $W,X,Y,Z$ belonging to different domains.}
+Prior to generation, \textsc{LTLZinc} converts the temporal specification $\gF$ into an Symbolic Finite-state Automaton~\cite{veanes2010symbolic}, by means of an off-the-shelf compiler,\footnote{\url{https://github.com/whitemech/flloat}} the generated automaton is included to the \textsc{LTLZinc} specification as an additional form of background knowledge and it is exploited in the following generation phase.
+
+For both sequential and continual modes, a sequence is generated by means of random walks of length $T$ along the automaton, starting from the initial state. The sequence satisfies the temporal specification (i.e., it is associated with a positive label $\gL = \top$) if and only if the the generated trace ends in an accepting state of the automaton.
+Such trace is generated by a $T$-limited randomized depth-first search over the automaton, taking into account \textit{biasing options} which can guide the process to avoid, for example, self-loops at the beginning of a sequence, or, avoid starvation for ``orphan'' constraints, appearing in $\gC$, but not in $\gF$ (meaning that they are known predicates which however do not affect temporal behavior, and thus may never be observed if search is not biased).
+For instance, let us consider a dataset consisting of animals, plants and inanimate objects, each associated with a constraint, and a temporal specification indicating that plants will be observed at least once along the sequence. The predicates $\texttt{is\_animal}$ and $\texttt{is\_inanimate}$ are orphans which do not affect the temporal behavior, and act as ``don't care'' values during sampling.\footnote{This means that, when the dataset is used for sequence classification, the notions of ``animal'' and ``inanimate object'' can be safely discarded, however, when the same dataset is used for image classification, they correspond to a subset of the learning targets for which no prior hypothesis is available on their temporal distribution.} At the same time, the automaton associated with the temporal specification is characterized by an accepting sink state which is directly connected to the initial state. Such structure can bias sampling towards non-informative sequences: there is a $0.33\%$ probability of sampling at the first time-step the image of a plant, and every subsequent time-step becomes irrelevant for the sequence label, while we have no guarantee that animals or inanimate objects will be observed at least once by the end of the sequence (i.e., we may have generated a sequence consisting of images of plants only). By counter-biasing the search process, however, we can address both problems, for example, by avoiding sink states with a probability decreased exponentially over time, or by guiding the generator to observe positive instances of all the orphan predicates at least once with a best effort strategy (i.e., if it is impossible to observe all of them along the sequence, optimize for the maximum number of observations).\footnote{Additional biasing options are available in our software.}
+
+Each transition encountered during the search procedure corresponds to an assignment of constraint labels. A MiniZinc instance is built by means of reification of labels in $\gC$ into additional variables, which are constrained to assume values coherent with the transition guard, then the constraint satisfaction problem is solved for the remaining variables (which are assignments for $\gY$ and, possibly, some values of $\gC$ which are irrelevant for the given transition). In order to avoid computing a different solution for every time-step of every sequence, \textsc{LTLZinc} computes all the possible solutions for each transition in the automaton once,\footnote{In order to avoid keeping in memory unnecessary solutions for transitions which are never sampled, \textsc{LTLZinc} performs lazy insertions the first time a new assignment is encountered.} and it stores them in a cache, from which a random solution can be sampled in constant time as often as required.
+
+The main sequence sampling procedure, highlighted so far, is employed differently for sequential and continual generation.
+In \textbf{sequential mode}, the generator samples a target number of sequences $N$ for each dataset split. The generated sequences can be either \textit{all positives} (i.e., satisfying the temporal specification), or \textit{balanced positive and negative} sequences.\footnote{Additionally, low level functions in our code can generate a single positive or negative sequence, for experiments on unbalanced datasets.}
+A sequential dataset can have sequences of random length within a $\langle min, max\rangle$ (inclusive) range, or fixed length $T$ (corresponding to the range $\langle T, T\rangle$).
+The limited depth-first procedure is called $N$ times, each time fixing a random target length $min \leq T' \leq max$ and selecting a target label (positive or negative).
+In case the sampled sequence violates the desired target, the procedure backtracks, attempting a different randomized sub-path along the automaton. In case no path of length $T'$ satisfies the target label, successive attempts are made by lowering the sequence length to $T' - 1$, until the minimum value is reached (at which point the task specification cannot be satisfied).
+After each sequence in the dataset is generated, a solution for each transition is randomly sampled from the constraint cache, and variables irrelevant for each time-step are assigned arbitrarily. Each sequence in the generated dataset is labeled with: automaton trace (which transitions $s_i\rightarrow s_j$ were sampled), variable assignments (distinguishing irrelevant ones from those required for the transition), constraint values (distinguishing irrelevant and orphan ones from those affecting the transition), and the sequence label.
+In \textbf{continual mode}, only a single sequence is sampled. Such sequence is always positive and with a fixed sequence length $T$. Instead of having $N$ different sequences, a continual dataset is characterized by $T$ different episodes, each containing $N$ samples, which are built by extracting $N$ random assignments from the constraint cache. In this case, the sequence of traversed automaton states are a property of the entire dataset, and can be considered a form of background knowledge (i.e., a curriculum of experiences), instead of a sample-level annotation. Seeding the random generator with different values in continual mode will produce different curricula, which however share the property of satisfying the same temporal specification. This can be beneficial when exploring the effect of task ordering in Continual Learning~\cite{mannelli2024tilting}.
+
+\paragraph{Computational Complexity of Generation.}
+There are multiple non-polynomial steps involved in the generation of datasets.
+As time and space complexities for each stage depend on different quantities, we limit our analysis of the generation procedure to an informal discussion.
+%
+The conversion between \LTLf and Symbolic Finite-state Automata requires bi-exponential time with respect to the formula length and the output automaton has, in the worst case, a number of states exponential with respect to the number of atomic propositions appearing in the formula, however this step is performed only once during generation and meaningful human-defined formulae tend to be short.
+%
+The limited depth-first search procedure at the core of sequence sampling has a worst-case running time which is polynomial with respect to the number of potential next states and exponential with respect to the target sequence length, however such case will never be triggered in practice, as it would require an automaton which is fully connected (each state is a successor of every other state) and it is unlikely for an \LTLf formula to be converted to an automaton with such structure. Moreover, the randomized successor sampling step would need to consistently select a next state yielding a failed search every time.
+Search is repeated a number of times corresponding to the number of target sequences (i.e., the dataset size for \textbf{sequential mode}, or exactly once for \textbf{incremental mode}).
+Each transition of the automaton requires to solve a different Constraint Satisfaction Problem (which is a procedure at least NP-Hard), and, in theory, this process would need to be repeated for each time-step of every sequence.
+However, the constraint cache trades-off time for memory requirements. In this way, the number of constraint satisfaction problems to solve, is in the worst case equal to the number of transitions of the automaton (which is in practice much smaller than the theoretical worst case).\footnote{Given the regular structure of transition guards, a straightforward improvement upon the current caching mechanism can be implemented by memorizing partial solutions, and solving smaller Constraint Satisfaction problems as intersections of previously known solutions. We reserve this improvement to future work.}
+
+\section{Sequential Tasks}\label{ltlzinc:sec:seqtasks}
+A learning and reasoning agent can exploit a sequential \textsc{LTLZinc} dataset, generated from a specification $\langle \gX, \gY, \gC, \gF \rangle$, in multiple ways. We envision three basic task families, covering a large portion of the temporal and relational reasoning spectrum.
+For all three, we will consider the following \textsc{LTLZinc} problem as an example:
+\begin{align*}
+ \gX\colon\quad&A: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\};\\
+ &B: \left\{\mathimg{svhn0}, \mathimg{svhn1}, \mathimg{svhn2}, \mathimg{svhn3}, \mathimg{svhn4}, \mathimg{svhn5}, \mathimg{svhn6}, \mathimg{svhn7}, \mathimg{svhn8}, \mathimg{svhn9}\right\};\\
+ &C: \left\{ \mathimg{cifarair}, \mathimg{cifaraut}, \mathimg{cifarbir}, \mathimg{cifarcat}, \mathimg{cifardee}, \mathimg{cifardog}, \mathimg{cifarfro}, \mathimg{cifarhor}, \mathimg{cifarshi}, \mathimg{cifartru}\right\}\\
+ \gY\colon\quad&A, B: [0,9]; \\
+ &C: \left\{\text{airplane}, \text{automobile}, \text{bird}, \text{cat}, \text{deer}, \text{dog}, \text{frog}, \text{horse}, \text{ship}, \text{truck}\right\}\\
+ \gC\colon\quad&\texttt{p}(A, B, C): A = 2 \cdot B \vee B = 2 \cdot C;\\
+ &\texttt{q}(A, B): \texttt{all\_different}([A,B]);\\
+ &\texttt{r}(C): C \in \left\{\text{bird}, \text{cat}, \text{deer}, \text{dog}, \text{frog}, \text{horse}\right\}\\
+ \gF\colon\quad&\ltlfinally r(C) \wedge ((p(A,B,C) \leftrightarrow \ltlnext q(A,B)) \ltluntil r(C)).
+\end{align*}
+%
+The example above exploits three different datasets (MNIST Digits~\cite{lecun1998mnist}, SVHN~\cite{netzer2011reading}, Cifar-10~\cite{krizhevsky2009learning}, two of which are mapped to the same symbolic labels), and three different kinds of constraints.
+Relational constraints $\texttt{p/3}$ and $\texttt{q/2}$ link together different symbolic labels, while $\texttt{r/1}$ is a propositional constraint limiting (for the specific time-steps in which it holds true) the possible values of a single variable.\footnote{A propositional constraint can also describe some semantic feature of single symbolic values (e.g., $\texttt{is\_bird}(X): \texttt{has\_wings}(X) \wedge \texttt{has\_beak}(X)$), enabling concept-based temporal reasoning. Internally \textsc{LTLZinc} collates every non-integer symbolic label to a universe enumeration, allowing lexicographic comparisons also across different datasets.} At the same time, $\texttt{p/3}$ is an arbitrary logic-arithmetic expression,\footnote{In MiniZinc, enumerations are cast to integers in lexicographic order, therefore the implicit equivalences $\left\{airplane = 0, automobile = 1, \ldots, truck = 9\right\}$ hold. Predicate $\texttt{p/3}$ can be true, for example, with $A = \text{don't care}, B = 6, C = \text{cat (3)}$.} while $\texttt{q/2}$ is a \textit{global constraint} from the MiniZinc library, associated with well-known semantics ($A \not = B$).
+The automaton corresponding to the temporal specification is shown in Figure~\ref{ltlzinc:fig:example-dfa}. From it we can sample image sequences $\gS_\gX$ associated with their corresponding constraint traces $\gS_\gC$, such as the following positive ($\gS_\gX^+, \gS_\gC^+$) and negative ($\gS_\gX^-, \gS_\gC^-$) examples:\footnote{Underscores correspond to ``don't care'' truth assignments. For readability we use the shorthand notation $\texttt{p} \doteq \{\texttt{p}: \top\}, \neg\texttt{p} \doteq \{\texttt{p}: \bot\}$.}
+\begin{align*}
+	\gS_\gX^+ &= [\langle \mathimg{mnist3},\mathimg{svhn2}, \mathimg{cifartru}\rangle , \langle \mathimg{mnist8},\mathimg{svhn4}, \mathimg{cifaraut}\rangle , \langle \mathimg{mnist2},\mathimg{svhn1}, \mathimg{cifarair}\rangle , \langle \mathimg{mnist3},\mathimg{svhn2}, \mathimg{cifartru}\rangle , \langle \mathimg{mnist5},\mathimg{svhn5}, \mathimg{cifarcat}\rangle ]\\
+	\gS_\gC^+ &= [\langle \neg p, \_, \neg r\rangle , \langle p, \neg q, \neg r\rangle , \langle p, \neg q, \neg r\rangle , \langle \neg p, q, \neg r\rangle , \langle \_, \neg q, r\rangle ]\\\\
+	\gS_\gX^- &= [\langle \mathimg{mnist3},\mathimg{svhn2}, \mathimg{cifartru}\rangle , \langle \mathimg{mnist8},\mathimg{svhn4}, \mathimg{cifaraut}\rangle , \langle \mathimg{mnist2},\mathimg{svhn1}, \mathimg{cifarair}\rangle , \langle \mathimg{mnist0},\mathimg{svhn0}, \mathimg{cifarair}\rangle , \langle \mathimg{mnist5},\mathimg{svhn5}, \mathimg{cifarcat}\rangle ]\\
+	\gS_\gC^- &= [\langle \neg p, \_, \neg r\rangle , \langle p, \neg q, \neg r\rangle , \langle p, \neg q, \neg r\rangle , \langle \_, \neg q, \_\rangle , \langle \_, \_, \_\rangle ].
+\end{align*}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[mystate/.style={
+          circle, draw, inner sep=6pt 
+    },accepting/.style={double distance=3pt, outer sep=1.5pt+\pgflinewidth}]
+        \node[mystate, initial] (q1) {$1$};
+        \node[mystate, below right=3cm of q1] (q2) {$2$};
+        \node[mystate, right=3cm of q2] (q3) {$3$};
+        \node[mystate, accepting, below=6cm of q1] (q4) {$4$};
+        \node[mystate, below=3cm of q3] (q5) {$5$};
+
+        \path[->]
+            (q1) edge[bend left] node[left] {$\neg \texttt{p} \wedge \neg \texttt{q}$} (q2)
+            (q1) edge[bend left] node[above] {$\texttt{p} \wedge \neg \texttt{r}$} (q3)
+            (q1) edge[bend right] node[left] {$\texttt{r}$} (q4)
+            (q2) edge[loop left] node[left] {$\neg \texttt{p} \wedge \neg \texttt{q} \wedge \neg \texttt{r}$} (q2)
+            (q2) edge[bend right] node[below] {$\texttt{p} \wedge \neg \texttt{q} \wedge \neg \texttt{r}$} (q3)
+            (q2) edge[bend right] node[right] {$\neg \texttt{q} \wedge \texttt{r}$} (q4)
+            (q2) edge[bend right] node[above] {$\texttt{q}$} (q5)
+            (q3) edge[bend right] node[above] {$\neg \texttt{p} \wedge \texttt{q} \wedge \neg \texttt{r}$} (q2)
+            (q3) edge[loop right] node[right] {$\texttt{p} \wedge \texttt{q} \wedge \neg \texttt{r}$} (q3)
+            (q3) edge[bend left] node[below] {$\texttt{q} \wedge \texttt{r}$} (q4)
+            (q3) edge[bend left] node[right] {$\neg \texttt{q}$} (q5)
+            (q4) edge[loop below] node[below] {$\top$} (q4)
+            (q5) edge[loop below] node[below] {$\top$} (q5);
+
+    \end{tikzpicture}
+    \caption[A Symbolic Finite-state Automaton corresponding to formula $\ltlfinally \texttt{r} \wedge ((\texttt{p} \leftrightarrow \ltlnext \texttt{q}) \ltluntil \texttt{r})$]{A Symbolic Finite-state Automaton for the \LTLf formula $\ltlfinally \texttt{r} \wedge ((\texttt{p} \leftrightarrow \ltlnext \texttt{q}) \ltluntil \texttt{r})$. As $\left\{\texttt{p}, \texttt{q}, \texttt{r}\right\}$ can only assume values in $\sB$, this is in practice a condensed representation of a Deterministic Finite-state Automaton with transitions defined over an alphabet of $2^3$ symbols.}
+    \label{ltlzinc:fig:example-dfa}
+\end{figure}
+
+
+\paragraph{Knowledge-driven Sequence Classification.} Given a dataset of positive and negative sequences $\gD \subseteq \gX \times \sB$, sequence classification is the problem of learning a binary classifier $\phi_\vtheta: \gX \mapsto \sB$ from annotated examples, such that the input sequence $\gS_\gX$ is mapped to the positive class if and only if the sequence satisfies $\langle \gX, \gY, \gC, \gF \rangle$. Various degrees of knowledge injection are possible, based on the amount of information from the tuple $\langle \gX, \gY, \gC, \gF \rangle$ and annotations $\langle \gS_\gY, \gS_\gC, \gL\rangle$ available to the learning agent, with end-to-end sequence classification being the weakest (only sequence labels $\gL$ available) and fine-grained supervision at the relational and temporal levels being the strongest (i.e. the entirety of the \textsc{LTLZinc} problem and annotation tuples available). Additionally, the automaton trace annotated at generation time, can be exploited as an oracular source of knowledge, for agents exploiting state-based representations, such as Recurrent Neural Networks, Memory-augmented Neural Networks or Neuro-symbolic Automata~\cite{manginas2024nesya}.
+Instantiated in the previous example, a sequence classifier would attempt to learn $\gF$ as ``for a positive sequence, $\texttt{r}$ is guaranteed to be verified eventually, and $\texttt{p}$ and $\texttt{q}$ will alternate in consecutive time-steps, until $\texttt{r}$ is verified''. In order to achieve this objective, knowledge about $\gC$ or $\gY$ might be given, or learned jointly with the sequence label.
+
+\paragraph{Temporally-distant Supervision.}
+%The goal of Distant Supervision is to learn a certain number of classifiers $g_i: \gX_i \mapsto \gY_i$, without explicitly providing annotations at the symbolic level $\gY_i$. 
+When instantiated over time, Distant Supervision translates into learning all the neural classifiers in a way which satisfies the \textsc{LTLZinc} problem $\langle\gX, \gY, \gC, \gF\rangle$.
+Temporally-distant supervision in its ``purest'' form is an extremely weak learning signal, as multiple variable assignments must be learned from sequence-level annotations $\gL$. To overcome this issue, intermediate-level annotations (such as automaton traces, or constraint values) may also be exploited.
+In the given example, Temporally-distant Supervision corresponds to learning to classify decimal digits (either with two disjoint mappings for MNIST and SVHN, or employing a joint classifier robust against different perceptual domains) and the ten CIFAR-10 classes, by having access to $\gF$ and $\gC$.
+The challenges of Distant Supervision are greatly amplified by the relational and temporal nature of \textsc{LTLZinc}.
+Even over finite domains, a single constraint can be satisfied by a number of assignments exponential with the size of domains, and its nature can be more or less subject to the risk of reasoning shortcuts (e.g., \texttt{all\_different} allows any permutation of label mappings, as long as images from the same ground truth label can be mapped to the same shortcut label, while a comparison on the lexicographic ordering of labels has a much smaller, but still non-zero, chance of reasoning shortcuts).
+Introducing a temporal component, further increases the size of reasoning shortcuts, as every time-step compounds additional shortcuts (in a multiplicative fashion if constraints holding in consecutive time-steps do not overlap).
+
+\paragraph{Constraint Induction over Time.}
+The dictionary of relational constraints $\gC$ can be seen as a collection of inducible predicates in an Inductive Logic Programming setting. However, while in traditional ILP problems predicate semantics is learned directly from observations about their truth values, the goal of constraint induction over time is to learn the semantics of predicates in $\gC^{(t)}$, given indirect observations on sequence labels $\gL$ and image annotations $\gY^{(t)}$. In this setting, traditional ILP examples are provided indirectly by means of temporal knowledge $\gF$: the agent has to perform learning over multiple inducibles at different time-steps, aided by an auxiliary (possibly learned as well) selector function, which dynamically associates each example with the correct target.
+Grounding a constraint induction over time task in the provided example, the agent has to learn three different binary functions, one for each of $\{\texttt{p}, \texttt{q}, \texttt{r}\}$. Note that constraints such as $\texttt{p}$ can be significantly harder to learn than $\texttt{q}$ (as it belongs to a library of well-known relations, allowing, for example, brute-force approaches) and $\texttt{r}$ (as it is propositional in nature and the search space is significantly smaller). Difficulty is additionally increased in the case of ambiguities in the temporal behavior (e.g., we are not aware of whether the initial time-step satisfies $r$ or not), as multiple hypotheses need to be considered.
+Moreover, as inducible constraints can be observed in a very unbalanced fashion (e.g., because of rare events), the temporal specification can also aid in selecting relevant samples. Observing the automaton corresponding to the provided example (Figure~\ref{ltlzinc:fig:example-dfa}), it is clear that constraint $\texttt{r}$ is heavily unbalanced towards negative observations, as seven transitions require it to be negative, three to be positive, and four do not depend on its truth value, and that positive values are always observed when entering state ``4'' (which is a sink, therefore, after the first observation of a positive $\texttt{r}$, there is no longer any useful temporal information to exploit).
+
+\section{Continual Tasks}\label{ltlzinc:sec:inctasks}
+The most popular experimental settings in Continual Learning are \textit{incremental} in nature: agents constantly face new concepts, and are expected to take advantage of the entire learning experience, without being exposed to past experiences a second time. This assumption makes it is possible to benchmark various aspects of an agent learning over time, however it also oversimplifies the temporal behavior a learning agent could be exposed to in the real world.
+Assuming we can represent a single learning experience at time-step $t$ as a proposition $\varphi^{(t)} = \text{``the agent is exposed to experience t''}$, \LTLf (or \LTL in infinite-horizon settings, i.e., Lifelong Learning) can model a traditional Incremental Learning setting, solely by exploiting conjunctions and the next operator to define a chain of experiences: %$\gF = \bigwedge\limits_{t = 0}^{T} \ltlnext^{(t)}\varphi^t$, with $\ltlnext^{(t)}$ being the next operator applied $t$ times.
+$$\gF = \bigwedge\limits_{t = 0}^{T} \underbracket{\ltlnext \dots \ltlnext}_{t\text{ times}}\varphi^{(t)}.$$
+In fact, \LTLf expressivity allows to define behaviors more complex than simple chains of events: experiences can be defined in terms of invariances, eventual guarantees, conditional triggers, and so on. For example, a Continual Learning agent instantiated in an autonomous driving setting, can expect to observe a day-night domain shift, not just once (as popular setups may assume), but repeated periodically, and at the same time, it can assume that certain warning signs correspond to specific dangers in some future time-steps.
+\textsc{LTLZinc} allows to define the semantics of each experience $\varphi^{(t)}$ in a way which can be exploited to push Continual Learning research towards a more realistic setting, without sacrificing control over experimental variables.
+Moreover, as assumptions, like the ones exemplified above, can be formalized as \textsc{LTLZinc} problems, they can be injected into the learning agent as exploitable knowledge, which can counteract catastrophic forgetting in a targeted fashion.
+
+\paragraph{Class-continual Learning.}
+Class-incremental Learning, is an instance of multi-class learning, in which the agent is expected to learn disjoint groups of labels at each episode, being able, by the end of training, to recall all the classes.
+\textsc{LTLZinc} can formalize Class-incremental problems by presenting \textbf{disjoint partitions} at each time-step, i.e., by varying the tuple $\langle\gX^{(t)}, \gY^{(t)}\rangle$ dynamically. This can be achieved in two ways, by defining disjoint domains, $\langle\gX^{(0)}, \gY^{(0)}\rangle, \ldots, \langle\gX^{(T-1)}, \gY^{(T-1)}\rangle$, filtered by a single stream over a unary constraint, or by defining a universe domain $\langle\gX, \gY\rangle$, controlled by multiple propositional constraints in the form $\texttt{p}_t = Y \in \gY^{(t)}$, such that $\gY^{(i)} \cap \gY^{(j)} = \varnothing, \forall i \not = j \in \left[0, T\right)$ and $\bigcup\limits_{i = 0}^{T - 1} \gY^{(i)} = \gY$.
+For instance, the following is an example of a Class-incremental experience on MNIST Digits, where at each time-step images can belong only to either of two digit labels:
+\begin{align*}
+ \gX\colon\quad&Y: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+ \gY\colon\quad&Y: [0,9]\\
+ \gC\colon\quad&\texttt{p}_0(Y): Y \in \left\{0, 1\right\};\\
+ &\texttt{p}_1(Y): Y \in \left\{2, 3\right\};\\
+ &\texttt{p}_2(Y): Y \in \left\{4, 5\right\};\\
+ &\texttt{p}_3(Y): Y \in \left\{6, 7\right\};\\
+ &\texttt{p}_4(Y): Y \in \left\{8, 9\right\}\\
+ \gF\colon\quad&\texttt{p}_0 \wedge \ltlnext \texttt{p}_1 \wedge \ltlnext\ltlnext \texttt{p}_2 \wedge \ltlnext\ltlnext\ltlnext \texttt{p}_3 \wedge\ltlnext\ltlnext\ltlnext\ltlnext \texttt{p}_4.
+\end{align*}
+%
+Class-incremental learning can be generalized to a setting we call \textbf{Class-continual Learning}, by allowing $\gF$ to be an arbitrary \LTLf formula and by dropping the requirement $\gY^{(i)} \cap \gY^{(j)} = \varnothing, \forall i \not = j \in \left[0, T\right)$.
+
+\paragraph{Domain-continual Learning and Concept Drift.}
+In Domain-incremental Learning, the agent learns a single classifier, being presented with perceptual stimuli subject to distribution shift over time. By the end of training, the agent is expected to have good performance regardless of input distribution. \textsc{LTLZinc} can formalize Domain-incremental tasks by means of a single dummy constraint $\texttt{p}(Y) = \top$, with different streams linking it to \textbf{disjoint perceptual domains} $\gX^{(i)} \not = \gX^{(j)} \forall i\not = j$ over time. \textbf{Domain adaptation} experiments can be encoded by allowing perceptual domains to share some images.
+The following example models a digit classifier exposed to three different input distributions (MNIST Digits, SVHN and CIFAR-10 interpreted with integer labels).
+\begin{align*}
+ \gX_{MNIST}\colon\quad&Y: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\};\\
+ \gX_{SVHN}\colon\quad&Y: \left\{\mathimg{svhn0}, \mathimg{svhn1}, \mathimg{svhn2}, \mathimg{svhn3}, \mathimg{svhn4}, \mathimg{svhn5}, \mathimg{svhn6}, \mathimg{svhn7}, \mathimg{svhn8}, \mathimg{svhn9}\right\};\\
+ \gX_{CIFAR-10}\colon\quad&Y: \left\{ \mathimg{cifarair}, \mathimg{cifaraut}, \mathimg{cifarbir}, \mathimg{cifarcat}, \mathimg{cifardee}, \mathimg{cifardog}, \mathimg{cifarfro}, \mathimg{cifarhor}, \mathimg{cifarshi}, \mathimg{cifartru}\right\}\\
+ \gY\colon\quad&Y: [0, 9]\\
+ \gC\colon\quad&\texttt{p}(Y): \top\\
+ \gF\colon\quad&\texttt{p}(Y \mapsto \langle\gX_{MNIST}, \gY\rangle) \wedge \ltlnext \texttt{p}(Y\mapsto \langle \gX_{SVHN}, \gY\rangle) \wedge\\ & \ltlnext\ltlnext \texttt{p}(Y \mapsto \langle \gX_{CIFAR-10}, \gY \rangle).
+\end{align*}
+%
+\textbf{Concept drift} is the phenomenon in which the same perceptual stimulus changes semantics over time. It is straightforward to encode concept drift in \textsc{LTLZinc}, by exploiting streams to map the same $\gX$ to different $\gY_i$, for example:
+\begin{align*}
+ \gX\colon\quad&Y: \left\{ \mathimg{cifarair}, \mathimg{cifaraut}, \mathimg{cifarbir}, \mathimg{cifarcat}, \mathimg{cifardee}, \mathimg{cifardog}, \mathimg{cifarfro}, \mathimg{cifarhor}, \mathimg{cifarshi}, \mathimg{cifartru}\right\}\\
+ \gY_0\colon\quad&Y: [0, 9];\\
+\gY_1\colon\quad&Y: \left\{airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck\right\};\\
+ \gY_2\colon\quad&Y: \left\{animal, vehicle\right\}\\
+ \gC\colon\quad&\texttt{p}(Y): \top\\
+ \gF\colon\quad&\texttt{p}(Y \mapsto \langle\gX, \gY_0\rangle) \wedge \ltlnext \texttt{p}(Y\mapsto \langle \gX, \gY_1\rangle) \wedge \ltlnext \ltlnext \texttt{p}(Y\mapsto \langle \gX, \gY_2\rangle).
+\end{align*}
+
+\paragraph{Task-continual Learning.}
+Task-incremental Learning is an instance of multi-task learning, where the agent is exposed to one task at the time and, by the end of the training experience, it is expected to perform well in all of them. Assuming we can describe a single task by means of an invariance constraint (e.g., a relation linking multiple inputs, which is always true when experiencing the given task), a task-incremental experience can be described by guaranteeing that each constraint is true exactly once. For example, the four modulo-10 arithmetic operations on MNIST Digits can be described as the following \textsc{LTLZinc} problem:\footnote{Formally, for a Task-incremental Learning setting we would also need to assume constraints to be disjoint in time, and $\gF$ such that $p_{add}$ is also false in each time-step except the first one, $p_{sub}$ is false everywhere except the second time-step, and so on.}
+\begin{align*}
+ \gX\colon\quad&A, B, C: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+ \gY\colon\quad&A, B, C: [0,9]\\
+ \gC\colon\quad&\texttt{add}(A, B, C): A + B \equiv C \mod{10};\\
+ &\texttt{sub}(A, B, C): A - B = C \wedge A \geq B;\\
+ &\texttt{mul}(A, B, C): A \cdot B \equiv C \mod{10};\\
+ &\texttt{div}(A, B, C): A \div B = C \wedge B \not = 0\\
+ \gF\colon\quad&\texttt{add} \wedge \ltlnext \texttt{sub} \wedge \ltlnext\ltlnext \texttt{mul} \wedge \ltlnext\ltlnext\ltlnext \texttt{div}.
+\end{align*}
+%
+Like Class-incremental problems, we can generalize Task-incremental Learning to \textbf{Task-continual Learning}, by allowing arbitrary formulae for $\gF$.
+It is important to note that, in this setting, constraints in $\gC$ are \textit{invariance relations}, characterizing the expected input-output behavior, therefore, their labels act as a binary encoding\footnote{If the \textsc{LTLZinc} problem corresponds to a traditional Task-incremental setting, like the example above, this encoding will be one-hot, in general multiple tasks may be active at a given time.} of what is known as \textit{task-id} in the Continual Learning literature, i.e., an oracular descriptor of which task the agent is supposed to solve in the current time-step.
+%
+In the \textsc{LTLZinc} generator, streams can optionally be annotated with a direction (input/output). Directions do not affect the generation procedure, however they can provide the agent information about which variables are dependent from the others. This is especially useful in Task-continual settings like the proposed example, where uncertainty can be significantly reduced by noting that values for $C$ depend on the assignments of $\langle A, B \rangle$.
+
+\section{Released Sequential Datasets}\label{ltlzinc:sec:seqexp}
+%This section presents LTLZinc experiments conducted on six tasks for neuro-symbolic sequence classification over simple perceptual domains and complex relational and temporal knowledge.
+In this section we describe the sequential \textsc{LTLZinc} datasets released publicly. We release two collections: (i.) abstract temporal reasoning tasks grounded on synthetic perceptual domains, (ii.) tasks for Neuro-symbolic validation of safety-critical tasks. Every task is annotated with image-level labels, constraint annotations, binary sequence labels, and the trace of automaton states traversed during generation. For each task, biasing options are manually tuned according to the generated automaton topology, in order to minimize the presence of irrelevant subsequences.
+
+\subsection{\textsc{LTLZinc-Sequential-Short/Long}} These collections are characterized by six sequence classification tasks, where positive sequences satisfy the temporal specification, while negative sequences violate it. \textsc{LTLZinc-Sequential-Short} contains sequences between 10 and 20 time-steps, while \textsc{LTLZinc-Sequential-Long} contains longer sequences, between 50 and 100 time-steps. The two collections are otherwise generated from identical \textsc{LTLZinc} specifications. A third collection, \textsc{LTLZinc-Sequential-Short-Legacy}, is generated using an older and less efficient procedure based on rejection sampling, instead of limited depth-first search, but it is otherwise equivalent to \textsc{LTLZinc-Sequential-Short}.
+For every collection, 400 sequences are sampled and split into train (320), validation (40) and test (40) splits.
+Images are sampled from the MNIST Digits and the Fashion MNIST datasets and rescaled to $32 \times 32$ pixels.
+
+\paragraph{Task 1.} ``It will always be the case that $Y$ is lexicographically smaller than $Z$ if and only if two steps later $V$, $W$ and $Z$ belong to the same class''. This task focuses on comparisons and short term memory capabilities of the agent.
+\begin{align*}
+	\gX\colon\quad&Y, Z: \{\mathimg{fmnist0}, \mathimg{fmnist1}, \mathimg{fmnist2}, \mathimg{fmnist3}, \mathimg{fmnist4}, \mathimg{fmnist5}, \mathimg{fmnist6}, \mathimg{fmnist7}, \mathimg{fmnist8}, \mathimg{fmnist9}\};\\
+	&V, W, X: \{\mathimg{fmnist5}, \mathimg{fmnist6}, \mathimg{fmnist7}, \mathimg{fmnist8}, \mathimg{fmnist9}\}\\
+	\gY\colon\quad&Y, Z: \left\{bag, boot, coat, dress, pullover, sandal, shirt, sneaker, top, trouser\right\};\\
+	&V, W, X: \left\{sandal, shirt, sneaker, top, trouser\right\}\\
+	\gC\colon\quad&\texttt{p}(Y, Z): Y < Z;\\
+	&\texttt{q}(V, W, X): \texttt{all\_equal}([V,W,X])\\
+	\gF\colon\quad&\ltlglobally (\texttt{p}(Y,Z) \leftrightarrow \ltlnext\ltlnext \texttt{q}(V,W,X)).
+\end{align*}
+%
+The corresponding automaton has 8 states. Self-loops are avoided with a linear decay with rate $0.1$.\footnote{This means that the first time depth-first search encounters a loop state as potential successor, it will discard it from the successors list with probability $1-(0\cdot0.1)$, the second time with probability $1-(1\cdot 0.1)$, and so on. After this pruning step, a successor is sampled uniformly from the list.}
+
+\paragraph{Task 2.} ``It will always be true that, if $Y$ is lexicographically smaller than $Z$ for three consecutive time-steps, then $V$, $W$ and $X$ will share the same labels in the successive step''. This task employes the same domains and constraints of Task 1, but applies them to a different temporal specification, requiring a longer memory window.
+\begin{align*}
+	\gX\colon\quad&Y, Z: \{\mathimg{fmnist0}, \mathimg{fmnist1}, \mathimg{fmnist2}, \mathimg{fmnist3}, \mathimg{fmnist4}, \mathimg{fmnist5}, \mathimg{fmnist6}, \mathimg{fmnist7}, \mathimg{fmnist8}, \mathimg{fmnist9}\};\\
+	&V, W, X: \{\mathimg{fmnist5}, \mathimg{fmnist6}, \mathimg{fmnist7}, \mathimg{fmnist8}, \mathimg{fmnist9}\}\\
+	\gY\colon\quad&Y, Z: \left\{bag, boot, coat, dress, pullover, sandal, shirt, sneaker, top, trouser\right\};\\
+	&V, W, X: \left\{sandal, shirt, sneaker, top, trouser\right\}\\
+	\gC\colon\quad&\texttt{p}(Y, Z): Y < Z;\\
+	&\texttt{q}(V, W, X): \texttt{all\_equal}([V,W,X])\\
+	\gF\colon\quad&\ltlglobally ((\texttt{p}(Y, Z) \wedge \ltlnext \texttt{p}(Y, Z) \wedge \ltlnext \ltlnext \texttt{p}(Y, Z) \rightarrow\ltlnext\ltlnext\ltlnext \texttt{q}(V, W, X)).
+\end{align*}
+%
+The corresponding automaton has 5 states. Self-loops are avoided with a linear decay with rate $0.1$, while accepting and non-accepting sink states are avoided with a linear decay with rate $0.01$.
+
+\paragraph{Task 3.} ``$X$ will be less than the sum $Y + Z$, up to the point in which the next state has $X$, $Y$ and $Z$ belonging to different classes''. This task requires arithmetic comparisons and is characterized by a challenging temporal behavior (there may be positive sequences satisfying trivially the second constraint twice and never the first).
+\begin{align*}
+	\gX\colon\quad&X, Y, Z: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+	\gY\colon\quad&X, Y, Z: [0, 9]\\
+	\gC\colon\quad&\texttt{p}(X, Y, Z): \texttt{all\_different}([X,Y,Z]);\\
+	&\texttt{q}(X, Y, Z): X < Y + Z\\
+	\gF\colon\quad&\ltlfinally \texttt{p}(X, Y, Z) \wedge (\texttt{q}(X, Y, Z) \ltluntil \ltlnext \texttt{p}(X, Y, Z)).
+\end{align*}
+%
+The corresponding automaton has 5 states. Self-loops are avoided with a linear decay with rate $0.1$, while accepting and non-accepting sink states are avoided with a linear decay with rate $0.01$.
+
+\paragraph{Task 4.} ``$X$ will be less than the sum $Y + Z$, up to the point in which the next state has $X$, $Y$ and $Z$ belonging to different classes''. This task is the same as Task 3, with different perceptual domains (MNIST Digits and FMNIST interpreted as integer classes).
+\begin{align*}
+	\gX\colon\quad&X: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\};\\
+	&Y, Z: \left\{\mathimg{fmnist0}, \mathimg{fmnist1}, \mathimg{fmnist2}, \mathimg{fmnist3}, \mathimg{fmnist4}, \mathimg{fmnist5}, \mathimg{fmnist6}, \mathimg{fmnist7}, \mathimg{fmnist8}, \mathimg{fmnist9}\right\}\\
+	\gY\colon\quad&X, Y, Z: [0, 9]\\
+	\gC\colon\quad&\texttt{p}(X, Y, Z): \texttt{all\_different}([X,Y,Z]);\\
+	&\texttt{q}(X, Y, Z): X < Y + Z\\
+	\gF\colon\quad&\ltlfinally \texttt{p}(X, Y, Z) \wedge (\texttt{q}(X, Y, Z) \ltluntil \ltlnext \texttt{p}(X, Y, Z)).
+\end{align*}
+%
+The corresponding automaton has 5 states. Self-loops are avoided with a linear decay with rate $0.1$, while accepting and non-accepting sink states are avoided with a linear decay with rate $0.01$.
+
+\paragraph{Task 5.} ``$W + X = Y + Z$ is satisfied every other time-step''. This task is characterized by arithmetic reasoning over a simple temporal specification.
+\begin{align*}
+	\gX\colon\quad&W, X, Y, Z: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+	\gY\colon\quad&W, X, Y, Z: [0, 9]\\
+	\gC\colon\quad&\texttt{p}(W, X, Y, Z): W + X = Y + Z\\
+	\gF\colon\quad&\ltlglobally (\texttt{p}(W,X,Y,Z) \leftrightarrow \ltlweaknext \neg \texttt{p}(W,X,Y,Z)).
+\end{align*}
+%
+The corresponding automaton has 4 states. Self-loops are avoided with a linear decay with rate $0.1$, while accepting and non-accepting sink states are avoided with a linear decay with rate $0.01$.
+
+\paragraph{Task 6.} ``$X + Y = Z$ and $X + Y = 2\cdot Z$ alternate each other''. This task is characterized by arithmetic reasoning over a simple temporal specification.
+\begin{align*}
+	\gX\colon\quad&X,Y, Z: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+	\gY\colon\quad&X, Y, Z: [0, 9]\\
+	\gC\colon\quad&\texttt{p}(X, Y, Z): X + Y = Z;\\
+	&\texttt{q}(X, Y, Z): X + Y = 2 \cdot Z\\
+	\gF\colon\quad&\ltlglobally (\texttt{p}(X,Y,Z) \leftrightarrow \ltlweaknext \neg \texttt{q}(X,Y,Z)).
+\end{align*}
+%
+The corresponding automaton has 4 states. Self-loops are avoided with a linear decay with rate $0.1$, while accepting and non-accepting sink states are avoided with a linear decay with rate $0.01$.
+
+
+\subsection{\textsc{LTLZinc-Sequential-Safety-Prop/FOL}}
+These collections model nine \LTLf patterns~\cite{dwyer1998property} encoding common safety-critical properties. Both collections use the UrbanSound-Spectrogram\footnote{\url{https://github.com/mashrin/UrbanSound-Spectrogram}} dataset, rescaled to $224\times224$ RGB images, as perceptual stimuli, associated with integer classes. Sequences range between 10 and 25 time-steps and each task contains 1000 samples, split into train (800), validation (100) and test (100) sets.
+The \textsc{LTLZinc-Sequential-Safety-Prop} and \textsc{LTLZinc-Sequential-Safety-FOL} collections differ only in terms of the constraint dictionary $\gC$, while temporal specifications $\gF$ are homologous for the two collections.
+
+\begin{align*}
+	\begin{split}
+		\mathcal{X}_{Prop}\colon &Y: \left\{\mathimg{urban_0.png}, \mathimg{urban_1.png}, \mathimg{urban_2.png}, \mathimg{urban_3.png}, \mathimg{urban_4.png}, \mathimg{urban_5.png}, \mathimg{urban_6.png}, \mathimg{urban_7.png}, \mathimg{urban_8.png}, \mathimg{urban_9.png}\right\}\\
+		\mathcal{X}_{FOL}\colon &X, Y, Z: \left\{\mathimg{urban_0.png}, \mathimg{urban_1.png}, \mathimg{urban_2.png}, \mathimg{urban_3.png}, \mathimg{urban_4.png}, \mathimg{urban_5.png}, \mathimg{urban_6.png}, \mathimg{urban_7.png}, \mathimg{urban_8.png}, \mathimg{urban_9.png}\right\}\\\\
+		\mathcal{Y}_{Prop}\colon &Y: [0, 9]\\
+		\mathcal{Y}_{FOL}\colon &X, Y, Z: [0, 9]\\\\
+		\mathcal{C}_{Prop}\colon &\texttt{p}(Y): Y < 5;\\ &\texttt{q}(Y): Y \in \{0, 2, 4, 6, 8\};\\
+		&\texttt{r}(Y): Y > 5;\\
+		&\texttt{s}(Y): Y \in \{1, 3, 5, 7, 9\}\\
+		\mathcal{C}_{FOL}\colon &\texttt{p}(X,Y,Z): (X + Y) \mod 10 \equiv Z;\\ &\texttt{q}(X,Y,Z): \texttt{all\_different}([X, Y, Z]);\\
+		&\texttt{r}(X,Y,Z): (X < Y \wedge Y < Z) \vee (Z < Y \wedge Y < X);\\
+		&\texttt{s}(X,Y,Z): (X = Y \vee Y = Z) \wedge X \not = Z
+	\end{split}
+\end{align*}
+
+\paragraph{Task 1.} ``\texttt{p} is false before \texttt{q}.''
+$$\gF\colon\quad\ltlfinally \texttt{q} \rightarrow \ltlglobally \neg \texttt{p}.$$
+
+\paragraph{Task 2.} ``\texttt{p} is false after \texttt{r}.''
+$$\gF\colon\quad\ltlglobally (\texttt{r} \rightarrow \ltlglobally \neg \texttt{p}).$$
+
+\paragraph{Task 3.} ``\texttt{p} is false between \texttt{q} and \texttt{r}.''
+$$\gF\colon\quad \ltlglobally ((\texttt{q} \wedge \ltlnext \ltlfinally \texttt{r}) \rightarrow (\neg \texttt{p} \wedge \ltlnext(\neg \texttt{p} \ltluntil \texttt{r}))).$$
+
+\paragraph{Task 4.} ``\texttt{p} is false after \texttt{q} until \texttt{r}.''
+$$\gF\colon\quad\ltlglobally (\texttt{q} \rightarrow (\neg \texttt{p} \wedge \ltlnext (\neg \texttt{p} \ltluntil (\texttt{r} \vee \ltlglobally \neg \texttt{p})))).$$
+
+\paragraph{Task 5.} ``\texttt{s} always follows \texttt{p}.''
+$$\gF\colon\quad\ltlglobally (\texttt{p} \rightarrow \ltlfinally \texttt{s}).$$
+
+\paragraph{Task 6.} ``\texttt{s} responds to \texttt{p} before \texttt{r}.''
+$$\gF\colon\quad(\texttt{p} \rightarrow (\neg \texttt{r} \ltluntil (\texttt{s} \wedge \neg \texttt{r}))) \ltluntil (\texttt{r} \vee \ltlglobally \neg \texttt{r}).$$
+
+\paragraph{Task 7.} ``\texttt{s} responds to \texttt{p} after \texttt{q}.''
+$$\gF\colon\quad\ltlglobally (\texttt{q} \rightarrow \ltlglobally (\texttt{p} \rightarrow \ltlfinally \texttt{s})).$$
+
+\paragraph{Task 8.} ``\texttt{s} responds to \texttt{p} between \texttt{q} and \texttt{r}.''
+$$\gF\colon\quad\ltlglobally ((\texttt{q} \wedge \ltlnext \ltlfinally \texttt{r}) \rightarrow (\texttt{p} \rightarrow (\neg \texttt{r} \ltluntil (\texttt{s} \wedge \neg \texttt{r}))) \ltluntil \texttt{r}).$$
+
+\paragraph{Task 9.} ``\texttt{s} responds to \texttt{p} after \texttt{q} until \texttt{r}.''
+$$\gF\colon\quad\ltlglobally (\texttt{q} \rightarrow ((\texttt{p} \rightarrow (\neg \texttt{r} \ltluntil (\texttt{s} \wedge \neg \texttt{r}))) \ltluntil \texttt{r}) \vee \ltlglobally (\texttt{p} \rightarrow (\neg \texttt{r} \ltluntil (\texttt{s} \wedge \neg \texttt{r})))).$$
+%\subsection{Discussion}
+
+
+\section{Released Continual Datasets}\label{ltlzinc:sec:contexp}
+In this section we describe the continual \textsc{LTLZinc} datasets released publicly. We release two Class-continual curricula, instantiated in two variants: \textsc{LTLZinc-Continual-MNIST} (employing MNIST Digits images), and \textsc{LTLZinc-Continual-CIFAR} (based on CIFAR-100).
+Task 1 is characterized by the presence of \textit{rare classes}, appearing only once along the agent experience, while Task 2 models classes reappearing cyclically over time.
+Every task is generated with 3 different seeds, producing different curricula which are equivalent from the perspective of the temporal specification. Either task is associated with the generated trace along the automaton and the constraint validity for each episode. Each image within an episode is annotated with class labels.
+For evaluation purposes, a subset of labels of interest is provided as targets for ``focused'' metrics.
+
+\paragraph{Task 1 MNIST.}
+\begin{align*}
+ \gX\colon\quad&Y: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+ \gY\colon\quad&Y: [0,9]\\
+ \gC\colon\quad&\texttt{even}: Y \in \left\{2, 4, 6, 8\right\};\\
+ &\texttt{odd}: Y \in \left\{1, 3, 5, 7, 9\right\};\\
+ &\texttt{zero}: Y = 0\\
+ \gF\colon\quad&\neg \texttt{zero} \wedge (\neg \texttt{zero} \ltluntil (\texttt{zero} \wedge \ltlweaknext \ltlglobally \neg \texttt{zero}).
+\end{align*}
+Predicates $\texttt{odd}, \texttt{even}$ are orphans, guaranteed to be sampled in positive form at least for one episode along the curriculum (for $100\%$ of the samples inside that episode). Curriculum length: 10 episodes, dataset: 1000 images per episode (800 train, 100 val, 100 test). Focused metrics should refer to predicate $\texttt{zero}$.
+Note that since predicate $\texttt{zero}$ corresponds to a single class, the episode in which it appears will be characterized by a \textbf{one-class learning} setting.
+
+\paragraph{Task 1 CIFAR-100.}
+\begin{align*}
+ \gX\colon\quad&Y: \texttt{CIFAR-100 images}\\
+ \gY\colon\quad&Y: \texttt{CIFAR-100 classes}\\
+ \gC\colon\quad&\texttt{animals}: Y \in acquatic\_mammals \cup fish \cup insects \cup large\_carnivores \cup \\
+ &\quad\quad\quad\quad\quad\quad large\_omnivores\_and\_herbivores \cup reptiles \cup \\
+ &\quad\quad\quad\quad\quad\quad non\_insect\_invertebrates \cup  medium\_sized\_mammals \cup \\
+ & \quad\quad\quad\quad\quad\quad people \cup small\_mammals;\\
+ &\texttt{plants}: Y \in flowers \cup fruit\_and\_vegetables \cup trees;\\
+ &\texttt{inanimate}: Y \in food\_containers \cup household\_electrical\_devices \cup \\
+ &\quad\quad\quad\quad\quad\quad household\_furniture \cup large\_manmade\_outdoors\_things \cup \\
+ &\quad\quad\quad\quad\quad\quad large\_natural\_outdoors\_scenes \cup vehicles\_1 \cup vehicles\_2\\
+ \gF\colon\quad&\neg \texttt{plants} \wedge (\neg \texttt{plants} \ltluntil (\texttt{plants} \wedge \ltlweaknext \ltlglobally \neg \texttt{plants}).
+\end{align*}
+Predicates $\texttt{animals}, \texttt{inanimate}$ are orphans, guaranteed to be sampled in positive form at least for one episode along the curriculum (for $100\%$ of the samples inside that episode). Curriculum length: 50 episodes, dataset: 1000 images per episode (800 train, 100 val, 100 test). Focused metrics should refer to predicate $\texttt{plants}$.
+Learning is at the class level (100 targets), predicates are defined in terms of CIFAR-100 superclasses (e.g., $acquatic\_mammals = \left\{beaver, dolphin, otter, seal, whale\right\}$).
+Unlike the MNIST version of this task, predicate $\texttt{plants}$ corresponds to multiple classes, therefore, even though they are presented only during a single episode, such episode is still a traditional \textbf{multi-class supervised learning} setting.
+
+\paragraph{Task 2 MNIST.}
+\begin{align*}
+ \gX\colon\quad&Y: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+ \gY\colon\quad&Y: [0,9]\\
+ \gC\colon\quad&\texttt{p}: Y \in \left\{0, 1, 2\right\};\\
+ &\texttt{q}: Y \in \left\{3, 4, 5\right\};\\
+ &\texttt{r}: Y \in \left\{6, 7, 8\right\};\\
+ &\texttt{s}: Y = 9.\\
+ \gF\colon\quad&\ltlglobally(\texttt{p} \leftrightarrow (\ltlnext \neg \texttt{q} \wedge \ltlnext\ltlweaknext \texttt{q})).
+\end{align*}
+Predicates $\texttt{r}, \texttt{s}$ are orphans, guaranteed to be sampled in positive form at least for one episode along the curriculum (for $50\%$ of the samples inside that episode). Curriculum length: 20 episodes, dataset: 1000 images per episode (800 train, 100 val, 100 test). Focused metrics should refer to predicates $\texttt{p}, \texttt{q}$.
+
+\paragraph{Task 2 CIFAR-100.}
+\begin{align*}
+ \gX\colon\quad&Y: \left\{\mathimg{mnist0}, \mathimg{mnist1}, \mathimg{mnist2}, \mathimg{mnist3}, \mathimg{mnist4}, \mathimg{mnist5}, \mathimg{mnist6}, \mathimg{mnist7}, \mathimg{mnist8}, \mathimg{mnist9}\right\}\\
+ \gY\colon\quad&Y: [0,9]\\
+ \gC\colon\quad&\texttt{animals}: Y \in acquatic\_mammals \cup fish \cup insects \cup large\_carnivores \cup \\
+ &\quad\quad\quad\quad\quad\quad large\_omnivores\_and\_herbivores \cup reptiles \cup \\
+ &\quad\quad\quad\quad\quad\quad non\_insect\_invertebrates \cup  medium\_sized\_mammals \cup \\
+ & \quad\quad\quad\quad\quad\quad people \cup small\_mammals;\\
+ &\texttt{plants}: Y \in flowers \cup fruit\_and\_vegetables \cup trees;\\
+ &\texttt{inside}: Y \in food\_containers \cup household\_electrical\_devices \cup \\
+ & \quad\quad\quad\quad\quad\quad household\_furniture;\\
+ &\texttt{outside}: Y \in large\_manmade\_outdoors\_things \cup vehicles\_1 \cup \\
+ &\quad\quad\quad\quad\quad\quad  large\_natural\_outdoors\_scenes \cup vehicles\_2.\\
+ \gF\colon\quad&\ltlglobally(\texttt{inside} \leftrightarrow (\ltlnext \neg \texttt{outside} \wedge \ltlnext\ltlweaknext \texttt{outside})).
+\end{align*}
+Predicates $\texttt{animals}, \texttt{plants}$ are orphans, guaranteed to be sampled in positive form at least for one episode along the curriculum (for $50\%$ of the samples inside that episode). Curriculum length: 50 episodes, dataset: 1000 images per episode (800 train, 100 val, 100 test). Focused metrics should refer to predicates $\texttt{inside}, \texttt{outside}$.
+Learning is at the class level (100 targets), predicates are defined in terms of CIFAR-100 superclasses.

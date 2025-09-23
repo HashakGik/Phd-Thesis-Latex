@@ -1,0 +1,63 @@
+
+% optional quote
+%\epigraph{\it Your preferred citation quote here
+	%}
+%{\sc Author of the quote}
+
+Time is a governing force in nature: states, events, interactions and beliefs, all evolve along the temporal dimension. Cognitive processes in humans are strongly interconnected with time. Logical consequence, which is at the base of formal reasoning, and chain of thoughts, at the base of intuitive reasoning, are abstractions of temporal causality, and even conversations between agents can transfer information more effectively, when topics are incrementally disclosed, following a causal or temporal criterion. 
+Neural development is never-ending biological process strongly dependent on time, the brain's topology dynamically changes over time, concept formation and consolidation is progressive and builds upon previous notions, muscle memory relies on periods of activity and rest, and learning requires sequences of stimuli sorted in a meaningful way.
+%
+Humans extensively rely on curriculum learning~\cite{bengio2009curriculum} to develop novel motor and reasoning skills, with pedagogical techniques refined since the dawn of civilization.
+%
+Human reasoning is another process benefiting from meaningful progression, with formal inference methods proceeding from premises to conclusions, and intuitive reasoning relying on subsequent associations of ideas.
+Contrary to humans, learning paradigms for machines abstract from the notion of time and often rely on the simultaneous observation of multiple data points. Time becomes an external source of complexity which introduces additional challenges, instead of opportunities.
+
+There exists a significant gap between learning and reasoning capabilities of humans and machines, and the different relationship these agents have with time can arguably be considered one of the main contributing factors.
+For instance, while symbolic reasoning is a task in which machines excel, the abstract entities manipulated by the reasoning process (i.e., the symbols) are assumed to be fully-known a priori, or discoverable in a time-agnostic learning phase. In contrast, humans can dynamically learn new concepts, combine and adapt existing ones, driven only by higher-level feedback (e.g., task performance, teacher guidance, or the endogenous sensory-motor feedback loop). 
+In sub-symbolic methods, time even plays a negative role, as convergence in many Machine Learning algorithms can only be guaranteed when data is observed in an independent and identically distributed fashion, and catastrophic forgetting~\cite{mccloskey1989catastrophic} affects systems equipped with limited memorization capabilities, making adaptation towards natural learning settings (i.e., more similar to how humans perceive and learn from real world stimuli) even more challenging~\cite{casoni2024pitfalls}.
+
+Properly evaluating the performance of Artificial Intelligence systems is crucial to measure progress in the area, to evaluate its effectiveness in practical applications, and to identify limitations of state-of-the-art models. This is especially true when learning and reasoning are combined, as evaluating each component in isolation can hide a bigger picture, while evaluating the entire system in an end-to-end fashion hinders fine-grained diagnosis. Furthermore, many evaluation settings for learning and reasoning are time-agnostic, and the effects of data distribution and knowledge availability changing over time is seldom explored.
+In the last years there has been a growing interest in developing novel benchmarks that can assess the capability of Artificial Intelligence systems to perform reasoning tasks that require skills beyond plain pattern recognition~\cite{chollet2019measure}.
+Such problem has become prominent in the Neuro-symbolic Artificial Intelligence community, for multiple reasons. First of all, Neuro-symbolic approaches aim to combine the best of two different worlds, namely neural perception, and symbolic knowledge representation and reasoning. The evaluation of these hybrid models requires dedicated benchmarks, that should highlight the limitations of the two families of approaches, taken separately~\cite{ott2023think}. 
+Secondly, thanks to an explicit representation of knowledge (typically through logic), Neuro-symbolic approaches inherently favor interpretability, which is widely recognized to be a crucial feature to achieve trustworthy Artificial Intelligence~\cite{kaur2022trustworthy}, however, when knowledge is discovered from observations, or when learning is plagued by the phenomenon of reasoning shortcuts~\cite{marconato2023neuro}, even Neuro-symbolic systems may become opaque or unreliable.
+As an additional challenge, many Neuro-symbolic frameworks are currently trying to incorporate Continual and Semi-supervised settings in their learning paradigms~\cite{DBLP:conf/icml/MarconatoBFCPT23,liu2023weakly,yin2022visual}, an issue that also needs benchmarks with specific characteristics, which are currently under-explored in the literature~\cite{manhaeve2024benchmarking}.
+
+Regarding Continual Learning, a branch of Machine Learning dealing with time, evaluation techniques often rely on a linear and monotonic training regime, in which new knowledge is disclosed progressively, and never re-observed, failing to take into account the effect of complex temporal behaviors (such as cyclically repeating observations, rare events or causal events affecting each other), and ultimately skewing performance in favor of systems better conforming to experimental assumptions. Due to this linear training assumption, frameworks in Continual Learning also assume that the only form of knowledge about the temporal progression available to the agent is the number of training targets (and for a subset of settings, an oracular selector, known as task identifier), this scenario is however both limiting and far from natural settings where some assumptions about the temporal progression can often be made (e.g., it is reasonable to assume that an outdoor camera will be subject to stimuli which will cyclically change in terms of image features, such as luminance, because of the natural day and night succession).
+
+This thesis positions itself at the intersection of evaluation frameworks for Neuro-symbolic Artificial Intelligence dealing with the temporal dimension, attempting to fill the gap in the literature, and the necessity of learning without forgetting, typical of Continual Learning.
+
+\section{Structure of the Thesis}
+This thesis is divided in three parts, excluding Introduction (this chapter) and Conclusions (Chapter~\ref{chap:concl}).
+
+\paragraph{Part I: Background.} This part contains preliminary information relevant throughout the thesis. Chapter~\ref{chap:logics} introduces the syntax and semantics of the logic formalisms used in the rest of the thesis. Chapter~\ref{chap:cbr} surveys the literature of Case-based Reasoning systems, with a particular focus on Retrieval Systems and Disentanglement of Neural Networks. Chapter~\ref{chap:ciml} reviews the interplay between Constraints and Machine Learning, focusing on Constraint Integration techniques. Chapter~\ref{chap:chalsymb} describes desirable properties of Symbolic Representations and the challenges faced when attempting to learn them in a continuous fashion. Chapter~\ref{chap:nesyintro} introduces the domain of Neuro-symbolic Artificial Intelligence, with emphasis on Temporal Reasoning. Chapter~\ref{chap:continual} summarizes notions of Continual Learning relevant for our experiments.
+
+\paragraph{Part II: Benchmarking Learning and Reasoning.} This part covers the problems of empirical evaluation in Neuro-symbolic Artificial Intelligence, and introduces our novel benchmarking frameworks.
+Chapter~\ref{chap:benchnesy} discusses objectives and possible metric evaluations to take into account when designing novel benchmarks for Learning and Reasoning, proposes a novel taxonomy to characterize existing benchmarks along easy to navigate dimensions, and surveys the existing literature on benchmarks for Abstract Visual Reasoning and Learning and Reasoning over Time. Chapter~\ref{chap:kandybench} introduces \textsc{KANDY}, our curriculum-based Abstract Visual Reasoning benchmark, covering extensively possible use cases, the generation procedure, and the datasets we publicly share with the community.
+Chapter~\ref{chap:ltlzincbench} introduces \textsc{LTLZinc}, our formalism and benchmarking framework for Learning and Reasoning over Time, covering the generation procedure, its uses for Neuro-symbolic Temporal Reasoning and Continual Learning, and the publicly shared datasets we created.
+
+\paragraph{Part III: Time-aware Learning and Reasoning.} This part describes our experiments on Learning and Reasoning based on data generated with \textsc{KANDY} and \textsc{LTLZinc}.
+Chapter~\ref{chap:kandyind} explores the effect of Incremental Learning on Inductive reasoning, and validates the challenging nature of \textsc{KANDY} against symbolic reasoners and Vision Language Models. Chapter~\ref{chap:kandycem} presents a novel approach to learn Symbolic Representations of concepts in an unsupervised fashion, by exploiting the curricular nature of \textsc{KANDY}.
+Chapter~\ref{chap:ltlzincseq} presents our experiments on Sequence Classification with Background Knowledge on \textsc{LTLZinc}.
+Chapter~\ref{chap:ansya} explores the possibility of framing Approximate Verification of Safety-critical Systems into a Sequence Classification with Background Knowledge setting.
+Chapter~\ref{chap:zincontinual} covers our experiments on Continual Learning with Background Knowledge on \textsc{LTLZinc}.
+
+\section{Contributions}
+In this thesis, we make the following contributions.
+\begin{itemize}
+	\item We discuss relevant properties of Symbolic Representations Learning and their challenges;
+	\item We characterize benchmarks for Neuro-symbolic Artificial Intelligence by proposing a novel taxonomy;
+	\item We propose two fully customizable Benchmarking Frameworks with non-trivial resolution and multi-task capabilities:
+	\begin{description}
+		\item [\textsc{KANDY}] An Abstract Visual Reasoning for Inductive First-order Reasoning and Hierarchical Concept Discovery over Time,
+		\item [\textsc{LTLZinc}] A relational-temporal formalism and Benchmarking Framework for general Reasoning over Time and Continual Learning with Background Knowledge;
+	\end{description}
+\item We experiment on specific subsets of tasks generable by our Benchmarking Frameworks, achieving experimental results on a broad range of settings in the Learning and Reasoning over Time spectrum:
+\begin{itemize}
+	\item Effects of time on First-order Logic Induction, with Neural, Symbolic and Vision Language Model methods,
+	\item Time as bias for Unsupervised Concept Discovery,
+	\item Neuro-symbolic Sequence Classification with Background Knowledge,
+	\item Approximate Safety Verification of Finite Traces with Neuro-symbolic methods,
+	\item Continual Learning with Background Knowledge.
+	\end{itemize}
+\end{itemize}
+%\lipsum[1-4]

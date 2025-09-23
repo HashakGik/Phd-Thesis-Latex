@@ -1,0 +1,636 @@
+% PhDAI template version 0.15 March 2025
+%
+% A Word template is available in the .zip tailored to jurists
+%
+% Admissible changes to the template
+% ____________
+% change page height or page width +/- 5%
+% use an interlinea of up to 1.1 max
+% remove Parts
+% bibliographic reference and citation styles:
+%    natbib, abbrvnat is default
+%    natbib, author-year is available
+%    natbib/biblatex + other styles commonly used in a sub-field of AI are ok
+% use any package for algorithms, listings, figures, plots
+%
+% Not Admissible changes to the template
+% ____________
+% change in fonts type and size
+% change in page layout
+% change in the front page structure
+% moving "Publications" as a separate Section
+%
+% For any doubt, write to secretariat-ai-society@phd-ai.it
+%
+
+\documentclass[a4paper,twoside,openright]{book}
+%
+%%% Packages
+% English
+\usepackage[english]{babel}
+% Biblio
+\usepackage[fixlanguage]{babelbib}
+\usepackage[nottoc]{tocbibind}
+% Conditional LaTeX
+\usepackage{ifthen}
+\newboolean{hostUNIPI}
+\setboolean{hostUNIPI}{false}
+\newboolean{hostUNIMORE}
+\setboolean{hostUNIMORE}{true}
+% Text font
+\usepackage[fontsize=12pt]{scrextend}
+\usepackage[osf]{libertinus}
+% Encoding
+\usepackage[utf8]{inputenc} 
+\usepackage[T1]{fontenc}
+% For images
+\usepackage{graphicx}
+% change imgs/ to the path of your imgs
+\graphicspath{{logos/}{imgs/}}
+\usepackage{graphbox}
+% Margins
+\usepackage[a4paper,top=3cm,bottom=3cm,left=3cm,right=3cm]{geometry}
+% For rotating images
+\usepackage{rotating}
+% For page header
+\usepackage{fancyhdr}
+% Hyperlinks
+%\usepackage[hidelinks]{hyperref} 
+\usepackage{hyperref,bookmark}
+\hypersetup{
+    colorlinks,
+    citecolor=blue,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=blue
+}
+% For quotes
+\usepackage{epigraph}
+% Prevents page numbers/headings from appearing on empty pages
+\usepackage{emptypage}
+% Math libraries
+\usepackage{amssymb}
+\usepackage{minted}
+
+\usepackage{arydshln}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{bbm}
+% For colors
+\usepackage[dvipsnames]{xcolor}
+% For DAGs
+\usepackage{float}
+\usepackage{tikz}
+
+\usetikzlibrary{shapes,arrows, positioning, fit, arrows.meta, shapes.geometric, backgrounds,chains,calc}
+
+\tikzstyle{encoder}=[trapezium, trapezium angle=60, minimum height=3em, draw, shape border rotate=180]
+\tikzstyle{mlp} = [draw, rectangle, 
+minimum height=1em, minimum width=6em]
+\tikzstyle{decoder}=[trapezium, trapezium angle=60, minimum height=3em, draw, shape border rotate=0]
+\tikzstyle{sum} = [draw, circle, node distance=1cm, label=center:+]
+\tikzstyle{input} = [draw, trapezium, trapezium right angle=60, trapezium left angle=120, minimum width=6em, minimum height=1em]
+\tikzstyle{output} = [draw, trapezium, trapezium left angle=60, trapezium right angle=120, minimum width=6em, minimum height=1em]
+
+\tikzstyle{outer} = [draw=gray,thick,inner sep=5pt]
+
+\usepackage{caption}
+\usepackage{subcaption}
+% For block quotes
+\usepackage{csquotes}
+% For tables
+\usepackage{booktabs}
+% For algorithms
+\usepackage[algo2e, ruled]{algorithm2e}
+\usepackage[noend]{algpseudocode}
+% For Biblio
+\usepackage[sort,square,numbers]{natbib}
+\bibliographystyle{abbrvnat}
+% Uncomment for author-year citations
+%\setcitestyle{authoryear,open={(},close={)}}
+\usepackage{bibentry}
+% If document is split among several files
+\usepackage{subfiles} % Best loaded last in the preamble
+
+% maximum interlinea is 1.1
+%\renewcommand{\baselinestretch}{1.1}
+
+
+% for dummy text, can remove when not used
+\usepackage{lipsum} 
+
+\usepackage{adjustbox}
+\usepackage{mathtools}
+\usepackage{dirtree}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{dialogue}
+\usepackage{soul}
+\usepackage{framed}
+\usepackage[most]{tcolorbox}
+\usepackage{simplebnf}
+\usepackage{tikz}
+\usetikzlibrary{positioning, automata}
+\usepackage{stmaryrd}
+\usepackage{xspace}
+\usepackage{amsfonts}
+\usepackage[geometry]{ifsym}
+
+
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
+%\usepackage{color, colortbl}
+%\definecolor{Gray}{gray}{0.9}
+
+\newcommand{\dashrule}[1][black]{%
+  \color{#1}\rule[\dimexpr.5ex-.2pt]{4pt}{.4pt}\xleaders\hbox{\rule{4pt}{0pt}\rule[\dimexpr.5ex-.2pt]{4pt}{.4pt}}\hfill\kern0pt%
+}
+
+\newcommand{\OLD}[1]{\textcolor{red}{\st{#1}}}
+\newcommand{\NEW}[1]{\textcolor{blue}{#1}}
+\newcommand{\QUEST}[1]{\textcolor{magenta}{QUESTION: #1}}
+\newcommand{\TODO}[1]{\textcolor{orange}{TODO: #1}}
+
+%\def\ltlweaknext{\mathcal{W}\xspace}
+\def\ltlweaknext{\raisebox{-0.55ex}{\mbox{\FilledCircle}}\xspace}
+\def\ltluntil{\,\mathsf{U}\,\xspace}
+\def\ltlreleases{\,\mathsf{R}\,\xspace}
+
+
+\def\ltlnext{\bigcirc\xspace}
+\def\ltlfinally{\Diamond\xspace}
+\def\ltlglobally{\Box\xspace}
+
+\newcommand{\LTL}{{\sc ltl}\xspace}
+\newcommand{\LTLf}{{\sc ltl}$_\mathrm{f}$\xspace}
+
+\newcommand{\mathimg}[1]{\vcenter{\hbox{\includegraphics[height=2ex]{imgs/math/#1}}}}
+
+% Header style for main body
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\scshape\nouppercase{\rightmark}}
+\rhead{\textbf{\thepage}}
+\fancyfoot{}
+\setlength{\headheight}{15pt}
+
+% Header style for frontmatter
+\fancypagestyle{plain}
+{
+  \fancyhf{}
+  \renewcommand\headrulewidth{0pt}
+  \renewcommand\footrulewidth{0pt}
+  \fancyfoot[C]{\thepage}
+}
+
+% add a blank page
+\def\blankpage{%
+    \clearpage%
+    \thispagestyle{empty}%
+    \addtocounter{page}{-1}%
+    \null%
+    \clearpage}
+
+% Theorems
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{remark}{Remark}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{example}{Example}[section]
+
+\input{math_commands.tex}
+
+%%%
+\begin{document}
+
+%*******************************************************
+% Front
+%*******************************************************
+
+\begin{titlepage}
+\centering
+
+% uncomment next line if host institution is UNIPI
+%\setboolean{hostUNIPI}{true}
+
+% uncomment next line if host institution is UNIMORE (it does not allow for logo in the front page)
+%\setboolean{hostUNIMORE}{true}
+
+\ifthenelse{\boolean{hostUNIPI} \OR \boolean{hostUNIMORE}}{
+    % host institution is UNIPI or UNIMORE
+    \includegraphics[width=0.35\textwidth]{logo_UNIPI} 
+} { % else
+    % host institution is not UNIPI nor UNIMORE
+    \begin{minipage}[c]{0.49\textwidth}
+    \raggedright
+    \includegraphics[width=0.7\textwidth]{logo_UNIPI}    
+    \end{minipage}
+    \begin{minipage}[c]{0.49\textwidth}
+    \raggedleft
+    % uncomment the host institution logo (do not change the width)
+    \includegraphics[width=1\textwidth]{logo_CNR}
+    %\includegraphics[width=0.95\textwidth]{logo_GSSI}
+    %\includegraphics[width=0.74\textwidth]{logo_IMT}
+    %\includegraphics[width=0.69\textwidth]{logo_INDAM}
+    %\includegraphics[width=1\textwidth]{logo_INFN}
+    %\includegraphics[width=0.76\textwidth]{logo_SNS}
+    %\includegraphics[width=1\textwidth]{logo_SSSA}
+    %\includegraphics[width=1\textwidth]{logo_UNIBA}
+    %\includegraphics[width=0.54\textwidth]{logo_UNIBO}
+    %\includegraphics[width=0.85\textwidth]{logo_UNICATT}
+    %\includegraphics[width=0.80\textwidth]{logo_UNIFI}
+    %\includegraphics[width=0.9\textwidth]{logo_UNIME}
+    % UNIMORE DOES NOT ALLOW FOR USING ITS LOGO
+    %\includegraphics[width=1\textwidth]{logo_UNIOR}
+    %\includegraphics[width=0.78\textwidth]{logo_UNIPG}
+    %\includegraphics[width=0.95\textwidth]{logo_UNISALENTO}
+    %\includegraphics[width=0.95\textwidth]{logo_UNISI}
+    %\includegraphics[width=0.8\textwidth]{logo_UNISS}
+    %\includegraphics[width=0.9\textwidth]{logo_UNITN}
+    %\includegraphics[width=0.95\textwidth]{logo_UNITS}
+    %\includegraphics[width=0.7\textwidth]{logo_UNIVAQ}
+    \end{minipage}
+} % end ifthenelse
+
+    \vspace{1.8cm}
+
+    % Unipi is fixed
+    {\Large \textsc{Università di Pisa}\par}
+    \vspace{0.3cm}
+
+\ifthenelse{\boolean{hostUNIPI}}{
+    \mbox{}\\
+} { % else
+    % uncomment the host institution
+    %{\Large \textsc{Consiglio Nazionale delle Ricerche}\par}
+    %{\Large \textsc{Gran Sasso Science Institute}\par}
+    %{\Large \textsc{Scuola IMT Alti Studi Lucca}\par}
+    %{\Large \textsc{Istituto Nazionale di Alta Matematica}\par}
+    %{\Large \textsc{Istituto Nazionale di Fisica Nucleare}\par}    
+    %{\Large \textsc{Scuola Normale Superiore}\par}
+    %{\Large \textsc{Scuola Superiore Sant'Anna}\par}
+    %{\Large \textsc{Università degli Studi di Bari Aldo Moro}\par}
+    %{\Large \textsc{Alma Mater Studiorum - Università di Bologna}\par}
+    %{\Large \textsc{Università Cattolica del Sacro Cuore}\par}
+    %{\Large \textsc{Università degli Studi di Firenze}\par}
+    %{\Large \textsc{Università degli Studi di Messina}\par}    
+    {\Large \textsc{Università degli Studi di Modena e Reggio Emilia}\par}
+    %{\Large \textsc{Università degli Studi di Napoli ``L’Orientale''}\par}
+    %{\Large \textsc{Università degli Studi di Perugia}\par}
+    %{\Large \textsc{Università del Salento}\par}
+    %{\Large \textsc{Università di Siena}\par}
+    %{\Large \textsc{Università degli Studi di Sassari}\par}
+    %{\Large \textsc{Università degli Studi di Trieste}\par}    
+    %{\Large \textsc{Università di Trento}\par}
+    %{\Large \textsc{Università degli Studi dell'Aquila}\par}
+} % end ifthenelse
+     
+    \vspace{0.3cm}
+    {\Large \textbf{National Ph.D. in Artificial Intelligence}\par}
+    \vspace{0.3cm}
+    {\normalfont \textit{XXXVIII cycle} \par}
+    \vspace{2.3cm}
+    
+    {\normalfont\bfseries\boldmath\LARGE
+    \begin{center}
+        %This is the Title of Thesis:\\ 
+        %This is the Continuation of the Title
+		Learning and Reasoning Over Time:\\
+        Challenges, Evaluation, and Opportunities
+    \end{center}
+    }	
+	
+    \vspace{3.9cm}
+	
+    \begin{minipage}[t]{0.45\textwidth}
+    \centering
+        \large
+        \textbf{Candidate}\par
+        Luca Salvatore Lorello\par
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.45\textwidth}
+    \centering
+        \large
+        \textbf{Supervisors}\par
+        Prof. Marco Lippi\par
+        Prof. Stefano Melacci\par
+    \end{minipage}
+
+
+    \vfill
+    Thesis submitted in partial fulfillment of the requirements for the degree of \par
+    Doctor of Philosophy in Artificial Intelligence
+\end{titlepage}
+
+\newpage
+
+\frontmatter
+
+\thispagestyle{empty}
+\phantomsection 
+
+%\vspace*{3cm}
+%\medskip
+
+%\begin{flushright}
+%    \emph{This page intentionally left blank}.
+%\end{flushright}
+
+\setcounter{page}{-1}
+\chapter{Summary}
+Neuro-symbolic Artificial Intelligence aims to bridge the gap between Machine Learning and Classic Artificial Intelligence, by integrating Learning and Reasoning within a unified framework. In this thesis we focus on two of the challenges in Neuro-symbolic integration, with a particular emphasis on the role of Time: (i.) \textit{learning symbolic representations}, and (ii.) \textit{benchmarking} Neuro-symbolic systems in a coherent and reproducible fashion.
+We describe desirable properties of symbolic representations and propose a novel taxonomy for benchmarks in Neuro-symbolic Artificial Intelligence, which we believe can harmonize existing benchmarks into coherent evaluation suites, and promote the development of novel frameworks covering currently under-explored niches.
+
+We propose two novel fully-customizable benchmarking frameworks with a strong temporal component. \textsc{KANDY} is a Curriculum-based Abstract Visual Reasoning framework for Inductive Learning and Hierarchical Concept Discovery, which exploits time to present tasks of increasing complexity to a learning agent.
+\textsc{LTLZinc} is a Constraint-based Learning and Reasoning over Time formalism and evaluation framework, capable of generating novel tasks relevant for the Temporal Reasoning and Continual Learning communities.
+
+Experiments on \textsc{KANDY} highlight the importance of time in both guiding the reasoning process, and promoting the autonomous development of novel concepts. In spite of its perceptual simplicity, \textsc{KANDY} is challenging for Neural Networks, Symbolic methods and Vision Language Models, and the exploitation of its curricular nature is fundamental to overcome some of the reasoning challenges it poses. We also developed a novel Concept-based approach exploiting Symbolic Representation Learning and the curricular progression of \textsc{KANDY} to develop task-driven concepts without providing explicit supervisions.
+
+\textsc{LTLZinc} is capable of generating tasks of interest for the Temporal Reasoning community which are both extensions of existing settings (Sequence Classification with Relational Background Knowledge), and novel settings (Constraint Induction over Time, and Temporal Distant Supervision). Our experiments on Sequence Classification highlight the challenging nature of a relational setting and open up to the possibility of Approximate Formal Verification of Safety-Critical Systems by Neuro-symbolic means.
+
+\textsc{LTLZinc} extends the Incremental Learning framework to a broader class of Continual Learning problems, which is both more expressive from a temporal perspective, and characterized by the possibility of injecting temporal knowledge to counteract catastrophic forgetting. Our experiments point toward the necessity of more sophisticated Continual Learning methods capable of exploiting temporal knowledge effectively.
+
+
+\chapter{Reproducibility Statement}
+The code for everything discussed in this thesis is available at: \url{https://github.com/continual-nesy}.
+All software requirements are specified in each repository. The code is written in Python and tested on various AMD64 Linux distributions. Code is distributed under the Beerware License,\footnote{\url{https://spdx.org/licenses/Beerware.html}} unless a stricter licensing is otherwise required by the Publisher of each paper.
+Every paper is freely available either in Open-Access, or pre-print form.
+
+\paragraph{Hardware Requirements.} With the exception of experiments of Section~\ref{kandy:sec:bongard}, every experiment was run locally on a mid-end gaming laptop (2018). During periods close to submission deadlines, additional computational resources were used (listed below). Co-authors contributed with computing power whenever possible. Experiments of Section~\ref{kandy:sec:bongard} were run on free Hugging Face Spaces.\footnote{\url{https://huggingface.co/spaces}}
+No paid subscriptions or services were used during the entirety of the PhD program for the purpose of running experiments. Any sufficiently motivated independent researcher with access to average computing power can reproduce every result presented in this work. This is a deliberate choice and political stance against the current trends in the Artificial Intelligence Research landscape.
+%
+Overall, the following four low-to-mid-end gaming laptops contributed to the majority of experiments, for a total of about 2000 days/GPU distributed over three years:
+\begin{itemize}
+	\item Asus ROG GL552VW (2016): Intel Core i7 6700HQ / 2.6 GHz quad-core, 32 Gb RAM / 64 Gb swap partition, Nvidia GTX960M / 2 Gb VRAM;\footnote{\textsc{KANDY} generator and Aleph experiments only.}
+	\item Lenovo Legion 5 15ARH05H (2018): AMD Ryzen 7 4800H / 2.9 GHz octa-core, 64 Gb RAM / 128 Gb swap partition, Nvidia RTX2060 / 6 Gb VRAM;
+	\item Asus TUF Dash FX516PR (2021): Intel Core i7 11370H / 3.3 GHz quad-core, 40 Gb RAM / 128 Gb swap partition, Nvidia RTX3070 / 8 Gb VRAM;
+	\item Asus TUF Gaming A15 FA507NV (2023): AMD Ryzen 7 7735HS Mobile Processor / 3.2 GHz octa-core, 64 Gb RAM / 128 Gb swap partition, Nvidia RTX4060 Laptop / 8 Gb VRAM.
+\end{itemize}
+
+\paragraph{Privacy and Data Leakage.}
+Our code does not retrieve, store locally or transmit any user or hardware information, and it can run on fully isolated sandboxes. To the best of our knowledge, the libraries our software relies on do not pose privacy or security threats.
+%
+For the sake of ease of management, experiment distribution and hyper-parameter selection can exploit the Weights and Biases library\footnote{\url{https://wandb.ai}} (this feature is disabled by default in every repository). Sweep files for each batch of experiments are included in each repository for reproducibility. Data samples and checkpoints are never transmitted or stored online (by default, our code does not store checkpoints locally either), only hyper-parameter configurations, final metrics, and hardware information (for the purpose of computing metrics such as GPU usage over time) are transmitted to Weights and Biases servers. With the exception of Section~\ref{kandy:sec:bongard} experiments (for which single problem instances were prompted manually to remote open source Vision Language Models), we currently have no reason to believe Large Language Models to have unfair advantage due to dataset leakage. 
+
+\chapter{Notation}
+Throughout this thesis, we will use the following notation, adapted from the textbook, \textit{Deep Learning}~\cite{goodfellow2016deep}. 
+
+\centerline{\bf Numbers and Arrays}
+\nopagebreak
+%\bgroup
+%\def\arraystretch{1.5}
+\begin{tabular}{p{2cm}p{11cm}}
+	$\displaystyle a$ & A scalar (integer or real) constant\\
+	$\displaystyle \alpha, \beta, \dots$ & Tunable hyper-parameters\\
+	$\displaystyle \lambda_{T}$ & Lambda hyper-parameter corresponding to loss term $T$\\
+	$\displaystyle \tau, \theta, \dots$ & Trainable parameters\\
+	$\displaystyle \va$ & A vector\\
+	$\displaystyle \mA$ & A matrix\\
+	%$\displaystyle \tA$ & A tensor\\
+	%$\displaystyle \mI_n$ & Identity matrix with $n$ rows and $n$ columns\\
+	%$\displaystyle \mI$ & Identity matrix with dimensionality implied by context\\
+	%$\displaystyle \ve^{(i)}$ & Standard basis vector $[0,\dots,0,1,0,\dots,0]$ with a 1 at position $i$\\
+	%$\displaystyle \text{diag}(\va)$ & A square, diagonal matrix with diagonal entries given by $\va$\\
+	$\displaystyle \ra$ & A scalar random variable\\
+	$\displaystyle \rva$ & A vector-valued random variable\\
+	%$\displaystyle \rmA$ & A matrix-valued random variable\\
+\end{tabular}
+%\egroup
+\vspace{0.5cm}
+
+\centerline{\bf Sets and Objects}
+\nopagebreak
+%\bgroup
+%\def\arraystretch{1.5}
+\begin{tabular}{p{4cm}p{9cm}}
+	$\displaystyle \sA$ & A set\\
+	$\displaystyle \sB$ & The set of Booleans ($\{0, 1\}$ or $\{\top, \bot\}$) \\
+	$\displaystyle \R$ & The set of real numbers \\
+	$\displaystyle \mathimg{cifarhor}$ & The set of images from the CIFAR-10 dataset~\cite{krizhevsky2009learning} corresponding to class ``horse'' \\
+	$\displaystyle \{0, 1\}$ & The set containing 0 and 1 \\
+	$\displaystyle \{0, 1, \dots, n \}$ & The set of all integers between $0$ and $n$\\
+	$\displaystyle \{k_1: v_1, \dots, k_n: v_n \}$ & The dictionary associating $k_1\mapsto v_1, \dots, k_n \mapsto v_n$\\
+	$\displaystyle [a, b]$ & The real interval including $a$ and $b$\\
+	$\displaystyle (a, b]$ & The real interval excluding $a$ but including $b$\\
+	%$\displaystyle \sA \backslash \sB$ & Set subtraction, i.e., the set containing the elements of $\sA$ that are not in $\sB$\\
+	$\displaystyle \sA^n$ & The Cartesian product $\sA \times \dots \times \sA$, $n$ times\\
+	$\displaystyle \gA$ & A structured object representing knowledge (dictionary, tuple, function, etc., the exact structure will be clear from context)\\
+	$\displaystyle \left\langle a, b, \dots \right\rangle$ & A tuple of objects $a \in \gA, b \in \gB, \dots$\\
+	$\displaystyle [a, b, \dots]$ & An ordered list or sequence of objects\\
+	%$\displaystyle \parents_\gG(\ervx_i)$ & The parents of $\ervx_i$ in $\gG$
+\end{tabular}
+\vspace{0.5cm}
+
+
+\centerline{\bf Indexing}
+%\bgroup
+%\def\arraystretch{1.5}
+\nopagebreak
+\begin{tabular}{p{3cm}p{10cm}}
+	$\displaystyle \eva[i]$, or $\displaystyle \eva_{i}$ & Element $i$ of vector $\va$, with indexing starting at 0\\
+	$\displaystyle \gA^{(t)}$ & Instantiation of $\gA$ at time-step $t$\\
+	%$\displaystyle \eva_{-i}$ & All elements of vector $\va$ except for element $i$ \\
+	$\displaystyle \emA[i,j]$, or $\displaystyle \emA_{i,j}$ & Element $i, j$ of matrix $\mA$ \\
+	$\displaystyle \mA[i, :]$, or $\displaystyle \emA_{i:}$ & Row $i$ of matrix $\mA$ \\
+	$\displaystyle \mA[:, i]$, or $\displaystyle \emA_{:i}$ & Column $i$ of matrix $\mA$ \\
+	%$\displaystyle \etA_{i, j, k}$ & Element $(i, j, k)$ of a 3-D tensor $\tA$\\
+	%$\displaystyle \tA_{:, :, i}$ & 2-D slice of a 3-D tensor\\
+	%$\displaystyle \erva_i$ & Element $i$ of the random vector $\rva$ \\
+\end{tabular}
+%\egroup
+\vspace{0.5cm}
+
+
+%\centerline{\bf Calculus}
+%\bgroup
+%\def\arraystretch{1.5}
+%\begin{tabular}{p{4cm}p{9cm}}
+% NOTE: the [2ex] on the next line adds extra height to that row of the table.
+% Without that command, the fraction on the first line is too tall and collides
+% with the fraction on the second line.
+%$\displaystyle\frac{d y} {d x}$ & Derivative of $y$ with respect to $x$\\ [2ex]
+%$\displaystyle \frac{\partial y} {\partial x} $ & Partial derivative of $y$ with respect to $x$ \\
+%$\displaystyle \nabla_\vx y $ & Gradient of $y$ with respect to $\vx$ \\
+%$\displaystyle \nabla_\mX y $ & Matrix derivatives of $y$ with respect to $\mX$ \\
+%$\displaystyle \nabla_\tX y $ & Tensor containing derivatives of $y$ with respect to $\tX$ \\
+%$\displaystyle \frac{\partial f}{\partial \vx} $ & Jacobian matrix $\mJ \in \R^{m\times n}$ of $f: \R^n \rightarrow \R^m$\\
+%$\displaystyle \nabla_\vx^2 f(\vx)\text{ or }\mH( f)(\vx)$ & The Hessian matrix of $f$ at input point $\vx$\\
+%$\displaystyle \int f(\vx) d\vx $ & Definite integral over the entire domain of $\vx$ \\
+%$\displaystyle \int_\sS f(\vx) d\vx$ & Definite integral with respect to $\vx$ over the set $\sS$ \\
+%\end{tabular}
+%\egroup
+%\vspace{0.25cm}
+
+\centerline{\bf Logic and Constraints}
+\nopagebreak
+%\bgroup
+%\def\arraystretch{1.5}
+\begin{tabular}{p{2cm}p{11cm}}
+	$\displaystyle \texttt{p}$ & An atom (proposition or first-order predicate)\\
+	$\displaystyle \texttt{p/k}$ & A predicate of arity $k$\\
+	$\displaystyle \texttt{p}(t_1, \dots, t_k)$ & A predicate or global constraint applied to terms $t_1, \dots, t_k$\\
+	$\displaystyle X$ & A first-order variable\\
+	$\displaystyle \varphi, \varrho, \varepsilon, \dots$ & Logic formulae\\
+\end{tabular}
+%\egroup
+\vspace{0.5cm}
+
+%\bgroup
+\centerline{\bf Probability and Information Theory}
+\nopagebreak
+%\def\arraystretch{1.5}
+\begin{tabular}{p{4cm}p{9cm}}
+	$\displaystyle P(\ra)$ & A probability distribution over a discrete variable\\
+	$\displaystyle p(\ra)$ & A probability distribution over a continuous variable, or over
+	a variable whose type has not been specified\\
+	%$\displaystyle \ra \sim P$ & Random variable $\ra$ has distribution $P$\\% so thing on left of \sim should always be a random variable, with name beginning with \r
+	$\displaystyle  \E_{\rx\sim P} [ f(x) ]\text{ or } \E f(x)$ & Expectation of $f(x)$ with respect to $P(\rx)$ \\
+	%$\displaystyle \Var(f(x)) $ &  Variance of $f(x)$ under $P(\rx)$ \\
+	%$\displaystyle \Cov(f(x),g(x)) $ & Covariance of $f(x)$ and $g(x)$ under $P(\rx)$\\
+	%$\displaystyle H(\rx) $ & Shannon entropy of the random variable $\rx$\\
+	$\displaystyle \KL ( P \Vert Q ) $ & Kullback-Leibler divergence of P and Q \\
+	$\displaystyle D_{\mathrm{JS}} ( P \Vert Q ) $ & Jensen-Shannon divergence of P and Q \\
+	%$\displaystyle \mathcal{N} ( \vx ; \vmu , \mSigma)$ & Gaussian distribution %
+	%over $\vx$ with mean $\vmu$ and covariance $\mSigma$ \\
+\end{tabular}
+%\egroup
+\vspace{0.5cm}
+
+
+%\bgroup
+\centerline{\bf Functions}
+\nopagebreak
+%\def\arraystretch{1.5}
+\begin{tabular}{p{2cm}p{11cm}}
+	$\displaystyle f: \sA \mapsto \sB$ & The function $f$ with domain $\sA$ and range $\sB$\\
+	$\displaystyle f \circ g $ & Composition of the functions $f$ and $g$ \\
+	$\displaystyle \varphi_\vtheta(\vx) $ & A neural function of $\vx$ parametrized by $\vtheta$.
+	(Sometimes we write $\varphi(\vx)$ and omit the argument $\vtheta$ to lighten notation) \\
+	$\displaystyle \varphi_{t;\vtheta}(\vx) $ & A neural function with parameters $\vtheta$ instantiated at time-step $t$\\
+	$\displaystyle \log x$ & Natural logarithm of $x$ \\
+	$\displaystyle \sigma(x)$ & Logistic sigmoid, $\displaystyle \frac{1} {1 + \exp(-x)}$ \\
+	%	$\displaystyle \zeta(x)$ & Softplus, $\log(1 + \exp(x))$ \\
+	$\displaystyle \lfloor x \rfloor$ & Floor function\\
+	$\displaystyle \lceil x \rceil$ & Ceil function\\
+	$\displaystyle || \vx ||_p $ & $\normlp$ norm of $\vx$ \\
+	$\displaystyle || \vx || $ & $\normltwo$ norm of $\vx$ \\
+	$\displaystyle x^+$ & Positive part of $x$, i.e., $\max(0,x)$\\
+	$\displaystyle \llbracket\mathrm{condition}\rrbracket$ & is 1 if the condition is true, 0 otherwise\\
+\end{tabular}
+%\egroup
+%\vspace{0.25cm}
+
+\tableofcontents
+
+%*******************************************************
+% Main
+%*******************************************************
+
+\mainmatter
+% Plain page styple for main body
+\fancypagestyle{plain}{
+  \fancyfoot{}
+  \fancyhead{}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+%*******************************************************
+\part*{Introduction}
+\label{part:intro}
+\addcontentsline{toc}{part}{\nameref{part:intro}}
+\chapter{Introduction}
+\label{chap:intro}
+\input{introduction.tex}
+
+\section{Publications}
+
+
+We list below the journal, conference and workshop papers that form the basis of this thesis published by the time of writing:
+%
+\begin{itemize}
+\nobibliography*
+    \item \cite{lorello2023challenge} \bibentry{lorello2023challenge}.
+    %    
+    \item \cite{manhaeve2024benchmarking} \bibentry{manhaeve2024benchmarking}.
+    %
+    \item \cite{lorello2025kandy} \bibentry{lorello2025kandy}.
+    %
+    \item \cite{lorello2024continual} \bibentry{lorello2024continual}.
+    %
+ \end{itemize}
+%
+The following papers have been accepted, but have yet to be published at the time of writing:
+%
+\begin{itemize}
+	\nobibliography*
+	\item \cite{lorello2025neuro} \bibentry{lorello2025neuro}.
+	%
+	\item \cite{lorello2025ansya} \bibentry{lorello2025ansya}.
+\end{itemize}
+%
+The following paper is currently under review at the time of writing:
+%
+\begin{itemize}
+\nobibliography*
+    \item \cite{lorello2025ltlzinc} \bibentry{lorello2025ltlzinc}.
+\end{itemize}
+
+\part{Background}
+\input{part1/logics.tex}
+\input{part1/iai.tex}
+\input{part1/nesy2023.tex}
+\input{part1/nesy.tex}
+\input{part1/continual.tex}
+
+\part{Benchmarking Learning and Reasoning}
+\input{part2/bench.tex}
+\input{part2/kandybench.tex}
+\input{part2/ltlzincbench.tex}
+
+\part{Time-aware Learning and Reasoning}
+\input{part3/kandyind.tex}
+\input{part3/kandycem.tex}
+\input{part3/ijcai.tex}
+\input{part3/ansya.tex}
+\input{part3/ltlzinc.tex}
+
+\part*{Conclusion}
+\label{part:conc}
+\addcontentsline{toc}{part}{\nameref{part:conc}}
+\chapter{Conclusion}
+\label{chap:concl}
+\input{conclusions.tex}
+
+% remove if no figures
+\listoffigures
+% remove if no tables
+\listoftables
+
+% Bibliography
+\bibliography{biblio.bib}
+
+
+\appendix
+
+\input{app/kandyhyper.tex}
+\input{app/kandyaleph.tex}
+\input{app/kandybongard.tex}
+\input{app/cem.tex}
+
+\input{app/ltlzincarch.tex}
+\input{app/ijcai.tex}
+\input{app/ltlzincoracle.tex}
+
+\input{app/ltlzinccont.tex}
+
+\end{document}
+
+%
+% EOF
+%

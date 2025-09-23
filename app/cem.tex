@@ -1,0 +1,55 @@
+\chapter{Alignment Metrics for \textsc{KANDY-Concepts} Experiments}\label{app:kandycemmetrics}
+\paragraph{Alignment Scores.} We compute the {\sc\small Ground Concept Alignment Score} (GCAS) and {\sc\small Task Alignment Score} (TAS) on the Concept Embedding Layer, as described in Espinosa et al.~\cite{espinosa2022concept}, with two main differences.
+The original implementation assumed supervised concept learning, thus a 1-to-1 alignment between ground truth ($\gC_T$) and predicted concepts ($\gC_P$), and comparisons are made element-wise, after a suitable permutation of $\gC_P$.
+As we deal with an unsupervised concept learning scenario, we lift the 1-to-1 alignment requirement by computing the 1-to-many mapping between each predicted concept $p_i \in \gC_P$ and $\gC_T$.
+%
+The second difference deals with which predicted concept vector is used in computations. In the original proposal, authors use concept embeddings, but we argue that this choice introduces noise in the interpretation of results, as the mixture of linear projections $\rho^{pos}_j$ and $\rho^{neg}_j$ can alter unpredictably the contribution of concept $j$.\footnote{This is particularly true in the case where linear projections do not share weights between concepts, but it also holds for the case of shared weights.} %especially in unsupervised settings, for example, two highly-correlated concepts likely encode the same ground truth, but if they are mapped to distinct embedding spaces,\footnote{This is the case when the linear projection layers $\phi^+_j$ and $\phi^-_j$ are distinct for each $j$. In our case, as projections are shared, } their alignment score may be inflated, as their expressive power is effectively doubled with respect to a single concept active for the same ground truth.
+In order to mitigate this issue, we compute GCAS and TAS by using the concept logit vector prior to sigmoid activation and linear embedding mapping.
+
+For each true concept $t_j \in \gC_T$, K-medoids clustering is performed on the predicted concept logits vector, varying the number of clusters. The GCAS is the area under the curve of the homogeneity score with respect to the number of clusters $\xi$, normalized against the theoretical perfect homogeneity.
+TAS is computed in the same way, by replacing true concepts with task labels $y \in \sY$.
+Let $N$ be the number of test samples and $h(\gX, \Pi_i(\xi)))$ the homogeneity score of clusterization $\Pi_i(\xi)$ with respect to cluster labels $\gX$, then:
+\begin{gather*}
+	\textsc{GCAS} = \frac{1}{N - 2} \sum\limits_{\xi = 2}^{N} \left(\frac{1}{|\gC_P|} \sum\limits_{i = 0}^{|\gC_P| - 1} h(\gC_T, \Pi_i(\xi))\right)\\
+	\textsc{TAS} = \frac{1}{N - 2} \sum\limits_{\xi = 2}^{N} \left(\frac{1}{|\gC_P|} \sum\limits_{i = 0}^{|\gC_P| - 1} h(\sY, \Pi_i(\xi))\right).
+\end{gather*}
+%
+%where $\tilde{g}$ is the concept activation score before the normalization computed via the sigmoid function.
+
+Both {\sc\small Ground Concept Alignment Score} and {\sc\small Task Alignment Score} are extended to the Continual Task-incremental setting, by recomputing them at the end of each task. We report these scores computed on the test set samples accumulated from every task, from the beginning up to the lastly trained one.
+
+\paragraph{Correlation Metrics.} We build correlation matrices between concepts, by means of {\sc\small Matthews correlation coefficient} (MCC)~\cite{matthews1975comparison}. Given the binarized predicted concept vector $\hat\vp$ and the ground truth vector $\vc$, let $N$ be the number of samples in the test set, $N^{11}_{i,j}$ the number of samples in which $\hat p_i = c_j = 1$, $N^{1\bullet}_{i}$ the number of samples in which $\hat p_i = 1$, and $N^{\bullet1}_{j}$ the number of samples in which $c_j = 1$, then the MCC is computed as:
+$$\mathbf{\Phi}^{PT}_{i,j} = \frac{N \cdot N^{11}_{i,j} - N^{1\bullet}_i \cdot N^{\bullet1}_j}{\sqrt{N^{1\bullet}_i \cdot N^{\bullet1}_j \cdot (N - N^{1\bullet}_i) \cdot (N - N^{\bullet1}_j)}}.$$
+In a similar fashion, we compute the correlation matrix $\mathbf{\Phi}^{PP}_{i,j}$ between predicted concepts and themselves.
+Like GCAS and TAS, we extend MCC to the Continual Learning case, by computing Task-incremental versions.
+To aggregate MCC matrices into scalar values, we compute three metrics.
+The {\sc\small Diagonalization Score} condenses $\mathbf{\Phi}^{PP}$ into a $[0, 1]$ value, with 1 corresponding to a diagonal matrix. It is computed by taking the absolute value of $\mathbf{\Phi}^{PP}$, masking its diagonal and averaging the remaining elements, which are finally subtracted from 1:
+$$
+\textsc{DIAGS} = 1 - \frac{\sum\limits_{i = 0}^{|\gC_P|-1}\sum\limits_{j = 0}^{|\gC_P|-1} (|\mathbf{\Phi}^{PP}_{i,j}| \cdot (\mI\mI^T_{i,j} - \mI_{i,j}))}{|\gC_P|^2}.
+$$
+Due to the lack of a 1-to-1 correspondence between ground truth and predicted concepts, condensation of $\mathbf{\Phi}^{PT}$ is more involved and requires two metrics to adequately capture ``quality''. For their computation we rely on the {\sc\small Jensen-Shannon divergence}~\cite{menendez1997jensen} (JSD), and output two scalar scores. 
+The \textsc{JSD-P} score summarizes how likely it is for predicted concepts to represent ground truth ones.
+It is computed by first splitting $\mathbf{\Phi}^{PT}$ into positive and negative correlations ($\mathbf{\Phi}^{+}$ and $\mathbf{\Phi}^{-}$, the latter having its sign flipped):
+\begin{gather*}
+	\mathbf{\Phi}^{+} = \mathbf{\Phi}^{PT}_{>0}\\
+	\mathbf{\Phi}^{-} = -\mathbf{\Phi}^{PT}_{<0}.
+\end{gather*}
+Positive and negative correlations are then normalized row-wise, so that they can be interpreted as probability distributions along $\gC_T$:
+\begin{gather*}
+	\tilde{\mathbf{\Phi}}^{C+}_{i,j} = \frac{\mathbf{\Phi}^{+}_{i,j}}{\sum\limits_{k = 0}^{|\gC_T|-1} \mathbf{\Phi}^{+}_{i,k}}\\
+	\tilde{\mathbf{\Phi}}^{C-}_{i,j} = \frac{\mathbf{\Phi}^{-}_{i,j}}{\sum\limits_{k = 0}^{|\gC_T|-1} \mathbf{\Phi}^{-}_{i,k}}.
+\end{gather*}
+
+These probabilities can then be compared, by means of Jensen-Shannon divergence, against the ideal case in which only one predicted concept $p_i$ is correlated with the considered true concept $c_j$.
+\begin{gather*}
+	\hat\Phi^{C+}_{i,:} = \mathtt{one\_hot}(\mathtt{argmax}
+	(\mathbf{\Phi}^{+}_{i,:}))\\
+	\hat\Phi^{C-}_{i,:} = \mathtt{one\_hot}(\mathtt{argmax}(\mathbf{\Phi}^{-}_{i,:}))\\
+	\textsc{JSD-P}^{+} = \frac{\sum\limits_{j = 0}^{|\gC_T|-1} D_\mathrm{JS}(\tilde{\Phi}^{C+}_{:, j} \parallel \hat\Phi^{C+}_{:, j})}{|\gC_T|}\\
+	\textsc{JSD-P}^{-} = \frac{\sum\limits_{j = 0}^{|\gC_T|-1} D_\mathrm{JS}(\tilde{\Phi}^{C-}_{:, j} \parallel \hat\Phi^{C-}_{:, j})}{|\gC_T|}.
+\end{gather*}
+Positive and negative correlations are finally averaged to obtain the final score:
+$$
+\textsc{JSD-P} = \frac{\textsc{JSD-P}^{+} + \textsc{JSD-P}^{-}}{2}.
+$$
+\textsc{JSD-T} is similarly computed by normalizing along columns and averaging with respect to $\mathcal{C}$, and it can be interpreted as how likely it is for a ground truth concept to be represented by each of the predicted concepts.

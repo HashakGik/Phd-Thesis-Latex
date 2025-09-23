@@ -1,0 +1,119 @@
+\chapter{Architecture for \textsc{LTLZinc-Sequential} Experiments}\label{app:ltlzincarc}
+%For simplicity, we describe each module of or pipeline (IC, CC, NSP) with a code-oriented syntax that is widely diffused in the AI community.
+
+\section{\textsc{IC} Module}\label{app:backbone}
+Each variable (input image) is processed by a small convolutional backbone for image classification.
+
+\begin{align*}
+	&\mathrm{Conv2d(3, 32, kernel\_size=5)}\\
+	&\mathrm{MaxPool2d(kernel\_size=2)}\\
+	&\mathrm{Conv2d(32, 64, kernel\_size=5)}\\
+	&\mathrm{MaxPool2d(kernel\_size=2)}\\
+	&\mathrm{Flatten()}\\
+	&\mathrm{ReLU()}\\
+	&\mathrm{Linear(64 \cdot 5 \cdot 5, 1024)}\\
+	&\mathrm{Dropout(0.5)}\\
+	&\mathrm{Linear(1024, num\_classes)}
+\end{align*}
+
+When variables share the same dataset, their corresponding backbones also share trainable parameters, while different datasets are processed by a different instance of the same architecture. In cases like \textsc{LTLZinc-Sequential} Tasks 1 and 2, where some variables use a subset of others, we still exploit parameter sharing, suppressing the unused output neurons of the last linear layer.
+
+\section{\textsc{CC} Modules}\label{app:constraints}
+\paragraph{MLP.}
+Each constraint is processed by the following architecture. Different constraints do not share trainable parameters.
+\begin{align*}
+	&\mathrm{Linear(num\_classes, num\_neurons)}\\
+	&\mathrm{ReLU()}\\
+	&\mathrm{Linear(num\_neurons, 1)}\\
+	&\mathrm{Sigmoid()}\\
+\end{align*}
+
+If temperature calibration is enabled, the last linear layer output is divided by a separate trainable parameter, before the sigmoid layer.
+
+\paragraph{Symbolic Programs.}
+
+\begin{align*}
+	&\mathrm{Softmax()}\\
+	&\mathrm{Program()}.
+\end{align*}
+
+
+The Scallop and ProbLog programs are manually defined for each task.\footnote{ProbLog (based on Prolog) is more expressive than Scallop (based on Datalog), however the six proposed tasks can all be encoded in Datalog.} As an example, the following is the Scallop program corresponding to \textsc{LTLZinc-Sequential} Task 3:
+\begin{verbatim}
+type var_x(u8), 
+var_y(u8), 
+var_z(u8)
+type p_0(), 
+p_1()
+
+\\ All different constraint:
+rel p_0() = var_x(x), 
+var_y(y), 
+var_z(z), 
+x != y, y != z, x != z
+
+rel p_1() = var_x(x), 
+var_y(y), 
+var_z(z), 
+x < y + z
+\end{verbatim}
+
+And this is the same task encoded in ProbLog:
+\begin{verbatim}
+% All different constraint:
+p_0(X, Y, Z) :- value(X, V1),
+value(Y, V2), 
+value(Z, V3), 
+V1 =\= V2, V2 =\= V3, V3 =\= V1.
+
+p_1(X, Y, Z) :- value(X, V1), 
+value(Y, V2), 
+value(Z, V3), 
+V1 < V2 + V3.
+
+query(p_0(var_x, var_y, var_z)).
+query(p_1(var_x, var_y, var_z)).
+\end{verbatim}
+
+If temperature calibration is enabled, both input logits and output probabilities are rescaled by two independent trainable parameters. Since Scallop returns probabilities, scaling is performed by first transforming the output in logit space, and then back to probabilities: $\mathrm{new\_prob} = \sigma(\frac{\sigma^{-1}(\mathrm{old\_prob})}{\mathrm{temp}})$.
+
+Note that, if calibration is disabled, a Scallop constraint module has no learnable parameter.
+
+\section{\textsc{NSP} Modules}\label{app:nextstate}
+Next state prediction modules are recurrently fed with both the \textsc{CC} module output and their own past prediction.
+
+\paragraph{MLP.}
+\begin{align*}
+	&\mathrm{Linear(num\_states + num\_constraints, num\_neurons)}\\
+	&\mathrm{ReLU()}\\
+	&\mathrm{Linear(num\_neurons, num\_states)}\\
+	&\mathrm{next\_state = Softmax()}\\
+	&\mathrm{sequence\_label = Sum(successor[:, accepting\_states]}\\
+\end{align*}
+If temperature calibration is enabled, the last linear layer output is divided by the corresponding temperature parameter, before the softmax layer.
+
+\paragraph{GRU.}
+\begin{align*}
+	&\mathrm{enc = Linear(num\_states, num\_neurons)}\\
+	&\mathrm{dec = Linear(num\_states, num\_neurons, num\_states)}\\
+	&\mathrm{gru = GruCell(num\_constraints, num\_neurons)}\\
+	\\
+	&\mathrm{s0 = enc(prev\_state)}\\
+	&\mathrm{s1 = gru(input, s0)}\\
+	&\mathrm{next\_state = Softmax(dec(s1))}\\
+	&\mathrm{sequence\_label = Sum(successor[:, accepting\_states]}\\
+\end{align*}
+If temperature calibration is enabled, the decoder output is divided by the corresponding temperature parameter, before the softmax layer.
+
+\paragraph{Fuzzy Automaton.}
+This module follows the implementation of~\cite{umili2023grounding}. We propositionalize constraints by replacing them with unique labels, and then transpose the transition table, in order to build a separate propositional formula for each next state. Each of these formulas is the disjunction of clauses in the form: $previous\_state \wedge transition\_guard$. Finally, we use Simpy~\cite{meurer2017sympy} to simplify each formula.
+
+During inference, we evaluate each formula by performing algebraic model counting on the probability (Fuzzy-P) or log-probability (Fuzzy-LP) semirings.
+
+If temperature calibration is enabled, outputs are calibrated (with the probability semiring, outputs are first converted in logit space and then softmaxed, akin to the Scallop constraint module, while with the log-probability semiring, outputs are scaled directly, then log-softmaxed before being re-used as current state for the next iteration). Just like the Scallop constraint module, if temperature calibration is disabled, fuzzy automaton modules have no learnable parameters.
+
+\paragraph{sd-DNNF Automaton.}
+This module follows the implementation of~\cite{manginas2024nesya}, with one major difference. In practice we start in the same way as the Fuzzy module, but instead of simplifying each formula, we compile it to a sd-DNNF (in the work of Manginas et al., only the transition guard is compiled, requiring a number of compilation steps which grows as the square of the number of states in the automaton, in our case only a linear number of compilations is needed).
+Like the fuzzy modules, evaluation is performed via algebraic model counting on probability (sd-DNNF-P) and log-probability (sd-DNNF-LP) semirings.
+
+Temperature calibration is identic to the fuzzy module.

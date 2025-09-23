@@ -1,0 +1,49 @@
+\chapter{Hyper-Parameters for \textsc{LTLZinc-Continual} Experiments}\label{app:ltlzinccont}
+Every Continual Learning experiment is repeated 9 times, using 3 different random seeds and 3 different curricula which satisfy the LTLZinc specification of each task.
+
+\section{Hyper-Parameters for \textsc{LTLZinc-Continual-MNIST}}
+
+\noindent\textbf{Optimizer.} SGD (lr: $10^{-3}$).
+
+\noindent\textbf{Epochs.} 25.
+
+\noindent\textbf{Batch Size.} 32.
+
+\noindent\textbf{Embedding Size.} 128 neurons.
+
+\noindent\textbf{Hidden Block Size.} 32 neurons for each block.
+
+\noindent\textbf{Lambdas.} $\lambda_{replay} = \lambda_{distil} = \lambda_{supervision} = 1.0$.
+
+\noindent\textbf{Replay Buffer.} Batch size: 16, Buffer size: 500 samples. None vs. Reservoir Sampling.
+
+\noindent\textbf{Buffer Loss.} Categorical Cross-Entropy vs. Gradient Episodic Memory.
+
+\noindent\textbf{Learning without Forgetting.} None vs. Self-Distillation vs Teacher-Student distillation. Minibatches for distillation are taken both from the current episode and replay buffer.
+
+\noindent\textbf{Modular Architecture.} Flat vs. One Hidden Block for each knowledge unit. Teachers are always flat. 
+
+\noindent\textbf{Backbone.} Trained from Scratch.
+
+\section{Hyper-Parameters for \textsc{LTLZinc-Continual-CIFAR}}
+Unless specified, hyper-parameters are the same as those for MNIST experiments.
+
+\noindent\textbf{Optimizer.} Adam (lr: $10^{-4}$).
+
+\noindent\textbf{Epochs.} 30.
+
+\noindent\textbf{Buffer Loss.} Categorical Cross-Entropy.
+
+\noindent\textbf{Learning without Forgetting.} None vs. Self-Distillation vs Teacher-Student distillation. Minibatches for distillation are taken only from the current episode.
+
+\noindent\textbf{Modular Architecture.} One Hidden Block for each knowledge unit. Teachers are always flat. 
+
+\noindent\textbf{Backbone.} Pre-Trained Weights vs. Pre-Trained Weights and Frozen.
+
+\noindent\textbf{Learning without Forgetting.} None vs. Self-Distillation vs Teacher-Student distillation. Minibatches for distillation are taken both from the current episode and replay buffer.
+
+\noindent\textbf{Modular Architecture.} Flat vs. One Hidden Block for each knowledge unit. Teachers are always flat. 
+
+\noindent\textbf{Backbone.} Trained from Scratch.
+
+\noindent\textbf{Backbone (frozen weights experiments).} Pre-Trained Weights vs. Pre-Trained Weights and Frozen.
