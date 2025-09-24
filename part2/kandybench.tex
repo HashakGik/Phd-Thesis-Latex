@@ -6,7 +6,7 @@ In this chapter we introduce \textsc{KANDY}, a benchmarking framework that can b
 Experiments of Chapter~\ref{chap:kandyind} and Chapter~\ref{chap:kandycem} will rely on such datasets.
 The content of this chapter is adapted from our MLJ journal paper~\cite{lorello2025kandy} and CoLLAs 2024 conference paper~\cite{lorello2024continual}.
 
-\section{\textsc{KANDY} at a glance}%\label{kandy:sec:benchmark}
+\section{\textsc{KANDY} at a glance}
 With respect to the taxonomy introduced in Chapter~\ref{chap:benchnesy}, \textsc{KANDY} can be described as an \textbf{image}-based benchmark, capable of covering \textbf{multiple families of tasks}. \textsc{KANDY} requires \textbf{First-order} expressivity to be solved successfully, it can be employed in \textbf{multiple reasoning directions} (with a particular focus on inductive reasoning), and it discloses data in a \textbf{incremental} fashion, with ground truth knowledge \textbf{given}, but evolving in a \textbf{defeasible} manner over time. 
 The following are the main possible use cases of \textsc{KANDY}:
 %
@@ -15,10 +15,8 @@ The following are the main possible use cases of \textsc{KANDY}:
     \item \textbf{Independent Tasks vs. Multi-task.} Tasks within a curriculum can be considered independent one from the other (thus training independent classifiers), or they can be jointly addressed in a multi-task setting (thus training a single classifier).% This comparison can be performed both in batch and in continual learning.
     \item \textbf{Curriculum vs. Random Order.} Tasks (and samples) can be shown to the learning agent in the order defined by the user (curriculum) or in a random order. In the former case, the agent is expected to progressively acquire skills to solve tasks of increasing complexity.
     \item \textbf{Supervised vs. Semi-supervised.} Tasks can be fully supervised, as well as sparsely supervised with a customizable criterion, raising the additional challenge of dealing with a semi-supervised data set.
-    \item \textbf{Interpretability vs. Explainability.} Tasks and samples are paired with symbolic ground truth annotations, allowing to compare interpretable-by-design systems and post-hoc explanations.%By providing the ground truth of the rules that are used to define each binary classification problem, KANDY allows to compare systems that learn interpretable rules (which thus can be diagnosed) with approaches that are not interpretable by design, but whose solutions can only be inspected with XAI techniques, a posteriori.
+    \item \textbf{Interpretability vs. Explainability.} Tasks and samples are paired with symbolic ground truth annotations, allowing to compare interpretable-by-design systems and post-hoc explanations.
 \end{enumerate}
-%In the following we describe the main building blocks of the framework, supported by Figure~\ref{kandy:fig:example-kandy}, and two curricula that we release as open challenges. 
-%Further details are provided in the supplementary material, while several usage-oriented details are  reported in the KANDY code repository, where we publicly share the data generator, our curricula, and code for running experiments with neural and symbolic baselines: \url{https://github.com/continual-nesy/KANDYBenchmark}.
 
 
 \begin{figure}
@@ -30,22 +28,17 @@ The following are the main possible use cases of \textsc{KANDY}:
 \end{figure}
 
 \section{Data Generation}\label{kandy:sec:generation}
-%\input{src/generator}
 
 Curricula in \textsc{KANDY} are defined in YAML format as lists of tasks. Each task is characterized by two mandatory descriptions of the positive and negative sets as {\it generation rules}, in the form of lists of perceptual trees, where leaves are atomic shapes, and intermediate nodes are annotated with {\it compositional operators}.  In order to avoid the exhaustive enumeration of each image sample, {\it auxiliary operators} (e.g., randomly selecting between multiple options, copying a subtree in a different location, etc.) can be used to expand the list programmatically.
 Optionally, each task can also define a {\it ground truth rule}, which is a Prolog-interpretable $\texttt{valid/1}$ predicate (built on some background knowledge). Collectively, generation and ground truth rules describe the task (Figure~\ref{kandy:fig:example-kandy}, top).
-KANDY yields synthetic images containing compositions of simple geometric shapes with several configurable properties: \textit{color}, \textit{shape}, and \textit{size}. %, relative position. 
-%Tasks consist in binary classification problems defined by positive and negative sets, optionally filtered by a symbolic rule at sampling time. Curricula are defined as sequences of tasks. 
+KANDY yields synthetic images containing compositions of simple geometric shapes with several configurable properties: \textit{color}, \textit{shape}, and \textit{size}. 
 %
 Images correspond each to a perceptual tree from the generation rules, and they are iteratively generated by a sampling procedure. If the ground-truth rule is specified, incoherent trees (i.e., samples from the positive set violating the rule and samples from the negative set satisfying it) are discarded.
-%Moreover, the generator allows to corrupt task indices, to investigate the effect of task selection errors in multi-task or continual learning settings.
-
-
 
 \paragraph{Sample Generation.} 
 Task generation rules are symbolic representations that are handled by \textsc{KANDY} in the form of collections of trees (forests). When rules are parsed and a new tree is generated, it is checked against the set of previously generated symbols (to avoid redundancy) and, optionally, against the ground-truth rule, to guarantee consistency between the generation rules and the ground-truth information. 
 %
-Then, the data generator tries to build samples that are inherently different at the symbolic level. %, thus strongly emphasizing the symbolic nature of the generation process. 
+Then, the data generator tries to build samples that are inherently different at the symbolic level.
 Symbol sets are built by sampling trees from either positive or negative generation rules, and by grounding their leaves.
 Since rules might involve non-deterministic attributes,\footnote{Any value (\texttt{\textasciitilde}), negation (\texttt{not\_*}), and disjunction (\texttt{a|b|\dots|k}).} a value is randomly assigned to each of the ungrounded attributes. %selects their values.
 Finally, perceptual variability is introduced when the image is generated from its symbolic representation, slightly altering size and color. 
@@ -68,22 +61,11 @@ Figure~\ref{kandy:fig:example-kandy} (bottom) exemplifies generation rules, grou
 %In the former case, splits are naturally balanced between positive and negative labels (thanks to the 0.5 probability of choosing between positive and negative sets), while in the latter, label distribution will be unbalanced in favor of the label with the highest symbolic variability: if both distributions are exhausted after reaching the target number of samples, imbalance will reflect the ratio of variability between positive and negative sets, if either is still capable of providing new samples, label distribution will be a poor proxy of symbol distribution.
 
 \paragraph{Image Rendering.}
-%
-%\textcolor{red}{Questi valori sono quelli di KANDY, ma il generatore può essere configurato con valori arbitrari (inclusi il colore di sfondo e il numero di classi di colore e dimensione)}
-%\textcolor{red}{@MARCO: da rivedere.}
-%Perceptual details: these considerations apply AFTER symbol generation, thus they do not affect purely symbolic systems, such as the ILP baselines. AAAAAAAAAA
-%
 Images are drawn at a customizable resolution after symbol generation and sample rejection phases. The background color can be customized as well, and shapes can take any color from a discrete set of configurable values.
 %
 Similarly, the size of atomic shapes can be controlled by defining a set of sizes of interest, and such a size is not a function of the level of the hierarchy to which atomic shapes belong.\footnote{If the drawing area is too small to draw an atomic shape, overlaps can happen in crowded or highly hierarchical scenes.}
 %
 Both size and color can be injected with configurable noise, to implement the already mentioned initial perceptual augmentation.
-
-%We deemed alternative approaches not viable, namely, recursively reducing atomic shapes would have caused the risk of unrecognizable shapes with deep hierarchies and the inhability of assigning clear labels to different sizes (as a small triangle on the first level of a hierarchy could be mistaken for a large triangle on the second level, and so on), and cropping would have, likewise, caused unrecognizable shapes (with the degenerate case of bounding boxes smaller than the largest inscribed square in a triangle/circle degenerating to a square).
-
-%\subsection{Task creation: design choices and constraints}
-%
-%Explain the criteria that drive the process of creating tasks, and especially tasks with incremental complexity. Here explain the constraints and the rationale that we have used to construct the 2/3 data sets that we release.
 
 \paragraph{Supervisions.} \textsc{KANDY} allows to sparsely attach supervisions in the generated curricula of tasks, a process which is modeled by a customizable law $f$. For each task, samples are sorted accordingly to the way the were generated, and the supervision law is function of the sample index $t$, scaled in $[0, 1]$ (i.e, $t=0$ is the first sample of the task and $t=1$ is the last one). %which is instantiated for each (non-rejected) sample in a given task of the curriculum (different tasks have their own private In progression variable). 
 \textsc{KANDY} implements an exponential decay law which is evaluated for each sample, $f(t) = \gamma \cdot e^{-\sigma \cdot t}$, where $\sigma = \log(\gamma \cdot \beta^{-1})$ and $\gamma, \beta \in [0, 1]$ are hyper-parameters which can be independently defined for each task in the curriculum.
@@ -118,10 +100,6 @@ The \texttt{grid} operator computes the smallest $n$ such that $n^2 \leq \#\math
 and children objects are drawn on an $n \times n$ grid from left to right, filling one row at the time, from top to bottom. Grids are incomplete in case the number of children is not a perfect square.
 
 \paragraph{Auxiliary Operators.}
-%
-%\textcolor{blue}{L. Abbiamo perso la parte importante degli operatori composizionali, questi descritti sono syntactic sugar per semplificare la definizione dei task...}\textcolor{red}{Non ci ero ancora arrivato, ho aggiunto sotto la 3.1.4 come placeholder...}
-%
-%Besides the set of primitives defined in the previous section, our framework allows to specify, when designing tasks, also additional operators that are easier to use for humans to build symbolic representations.
 \textsc{KANDY} also includes additional human-understandable auxiliary operators that simplify the definition of tasks.
 %
 These operators are list expansion primitives, which allow for compact definitions, mapping lists into other lists containing only atomic shapes and compositional operators.\footnote{For greater flexibility, list expansions are performed twice, operators whose name includes the \texttt{before} suffix are expanded before grounding the sample tree, while every other operator is expanded after grounding.}
@@ -169,16 +147,7 @@ diag_ul_lr:
 The ground-truth rule (green box Figure \ref{kandy:fig:example-kandy}, bottom) checks whether the sample should be accepted, by looking for a subtree ($\texttt{contains/2}$) satisfying the predicate $\texttt{tower/1}$. As the tree is indeed valid (the first \texttt{stack} contains two squares of the same size), the image can finally be generated, by introducing small perceptual variability in color and size. The result is the  positive image in the bottom part of Figure \ref{kandy:fig:example-kandy}.
 
 
-%\subsection{Possible usages and modalities}
-
-%Explain the scenarios in which the benchmark can be used: batch vs. continual, single task vs. multi-task, curriculum vs. random. Also mention the interpretability of results (explanations) as an additional task.
-
-
 \section{Released Datasets}\label{kandy:sec:curricula}
-%\subsection{Released curricula}\label{kandy:sec:curricula}
-%As illustrated in the previous subsections, KANDY is a benchmarking framework, that can be exploited to generate novel benchmarks with specific characteristics chosen by developers. Nevertheless,
-%To show the potential of KANDY and to issue a challenge that could be taken up by several AI communities, % (e.g., NeSy AI and continual learning), 
-%we release two benchmarks in the form of curricula of tasks, that showcase the features available to the end-user. We name the two curricula {\it Easy} and {\it Hard}, due to the different complexity of the involved tasks.
 In this section we describe the \textsc{KANDY} datasets released publicly. These consist of (i.) two \textit{temporal induction} datasets, (ii.) two collections of \textit{Bongard problems}, and (iii.) two \textit{concept discovery} datasets.
 %
 Each sample is a $224 \times 224$ RGB image annotated with: task ID, binary label, supervision state (whether the label should be used in training or if the sample should be treated as unsupervised), and symbolic representation. % (whether it should be considered a supervised sample or whether its label should be used only for evaluation) and the symbolic structure used to generate it.
@@ -193,7 +162,7 @@ Atomic objects can be {\it small} or {\it large} ($10 \times 10$ and $25 \times 
 Tasks $0$ to $8$ contain a single object and introduce basic (atomic) shapes ($0$-$2$) and color ($3$-$8$). % (circles, triangles and squares) and color (red, green, blue, cyan, magenta, yellow). 
 Positive instances contain an object possessing some target attributes, while negative ones contain an arbitrary object.
 %
-Tasks $9$ to $12$ introduce simple spatial relations between multiple objects. Namely, in such tasks the rightmost object in a positive sample is always a {\it red triangle}, presented in an increasingly complex context: along with an arbitrary object (task $9$), with multiple arbitrary objects ($10$), multiple objects, one of which is a {\it circle} ($11$), and multiple objects, one of which is {\it blue} ($12$). %\textcolor{red}{We expect a neural network to learn the base feature at task 9 and reuse it for subsequent tasks, given the limited amount of training samples? ML: NON FAREI QUI CONSIDERAZIONI SUI MODELLI.}
+Tasks $9$ to $12$ introduce simple spatial relations between multiple objects. Namely, in such tasks the rightmost object in a positive sample is always a {\it red triangle}, presented in an increasingly complex context: along with an arbitrary object (task $9$), with multiple arbitrary objects ($10$), multiple objects, one of which is a {\it circle} ($11$), and multiple objects, one of which is {\it blue} ($12$). 
 %
 Tasks $13$ and $14$ present complex inter-object relations without confounders: positives in task $13$ consist of a {\it triangle} and a {\it square} of the same color, positives in task $14$ are {\it palindromes of three objects} (i.e., A B A displaced horizontally).
 %
@@ -217,10 +186,6 @@ Positives in task $15$ contain objects of the same color if their number is {\it
 %
 Tasks $16$ and $17$ assess logic implication capabilities on top of complex object recognition. %, with positives in the form ``A implies B''. (i.e., both ``A and B'' and ``not A'' are positive samples).
 Positives in task $16$ contain {\it four objects} satisfying $(\text{traffic light} \Rightarrow \text{car}) \vee (\text{house} \Rightarrow \text{tower})$. Task $17$ universally quantifies task 16 on a grid. % of 2-to-4 groups.% extends task 16 on a grid of 2 to 4 groups such as positives have each group satisfying the rule.
-
-%\textcolor{red}{Vincoli reasoning hard? es. dimensione background knowledge + numero predicati regola + numero predicati helper}
-%
-%\textcolor{red}{Vincoli percettivi hard? es. ammettiamo sovrapposizioni ma solo in named objects riconoscibili?}
 
 \paragraph{\textsc{KANDY-Bongard-1/2}.} Both \textsc{KANDY-Induction} curricula are also released in the form of Bongard problems, with a single image divided in twelve panels for each task. Panels are extracted from the small version of either curriculum, by taking, for each task, the first six positive (rendered on the left portion of the image) and six negative (rendered on the right) samples of the test set, in the order they were generated. Panels are left blank (white) if fewer than six samples of the corresponding label were present in the test set.
 We release Bongard problems in three flavors. The first one corresponds to a simple $2\times6$ \textsc{grid} of \textsc{KANDY} images at their original size of  $224 \times 224$ pixels (Figure \ref{kandy:fig:bongard}, left). The other two flavors employ a Foundalis-style\footnote{\url{https://www.foundalis.com/res/diss_research.html}} template (Figure \ref{kandy:fig:bongard}, right), to present \textsc{KANDY} in a way which is perceptually similar to original Bongard problems. \textsc{Foundalis-224} upscales the original template to fit unmodified KANDY images, while \textsc{Foundalis-100} images  are built by downscaling KANDY images to $100\times 100$, which is the panel size in standard Bongard problems.

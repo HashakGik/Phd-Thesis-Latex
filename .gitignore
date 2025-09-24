@@ -1,0 +1,17 @@
+*~
+*-blx.bib
+*.xml
+*.gz
+*.aux
+*.bbl
+*.blg
+*.lof
+*.log
+*.lot
+*.out
+*toc
+_minted*
+part1/*.aux
+part2/*.aux
+part3/*.aux
+app/*.aux

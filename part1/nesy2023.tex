@@ -7,45 +7,30 @@ In this chapter we cover Symbolic Representation Learning, enumerating the desir
 \section{Symbolic Representations}
 In their everyday activities, humans continuously operate with symbols. Reasoning skills, decision making processes, planning activities, causality modeling, all require symbol formalization and manipulation. AI systems designed to address these tasks typically do not require to also learn the symbolic representations they operate on: symbols, predicates, or concepts are usually known a priori, or given by an external source of information, such as a supervisor~\cite{ciravegna2023logic}.
 %
-%Learning symbolic representations, on the other hand is a challenging task which \TODO{has been largely under-explored in the recent literature of this research area}. 
-%
-%\textcolor{blue}{Chiarire il punto di vista e le nostre definizioni di simboli, rappresentazioni e semantica}
-%
-%\textcolor{blue}{Passaggio symbolic representations -> discrete representations qui}
-%
 According to Newell and Simon~\cite{newell1972human}, a symbolic system maps abstract entities into symbols that are (i.) \textit{arbitrary} (i.e., whose shapes have no relation with their semantic meaning) and (ii.) \textit{recursively composable} (to produce complex and more general representations from elementary entities). In order to guarantee both properties, a symbol must belong to a discrete set.
 %
 For an effective representation of a given collection of concepts,  symbols should also be (iii.) \textit{non-ambiguous}, meaning that different symbols represent different concepts~\cite{asai2018classical}, and (iv.) \textit{pure}, suggesting that a concept should be encoded by the lowest possible number of symbols~\cite{chen2020concept}.
 %
 Learning these symbolic representations from perceptual stimuli is a challenging task. In fact, there exist several works that try to learn discrete representations, like Discrete Probabilistic Latent Spaces~\cite{asai2018classical}, Vector-quantized Variational Auto-encoders~\cite{van2017neural}, or Deep Hashing methods~\cite{luo2020survey}. All these approaches focus on downstream performance, neglecting the properties which make a symbolic representation a good one.
-%Yet, those approaches do not consider crucial properties that symbolic representations should possess, such as non-ambiguity, purity, and especially composability~\cite{newell1972human}. While the processing phase of the input stimuli is naturally handled by neural architectures, 
 Building a differentiable end-to-end approach for discrete, symbolic, representations poses a number of challenges, starting from the ill-defined nature of gradient-based techniques~\cite{poganvcic2020differentiation}.
 %
-%Moreover, we conjecture that, i
 Ideally, the learning process that produces symbolic representations should be (v.) \textit{unsupervised}, or at least weakly/partially supervised~\cite{stammer2022interactive}. This observation raises additional issues that suggest to re-think the whole learning paradigm, advocating the need for novel evaluation methods, addressing the effectiveness of the learned representations.
-%
-%Altre proprietà desiderabili sono la human intervenability, la possibilità di addestrare con partial supervision, efficienza di apprendimento, la robustezza dei simboli rispetto a conoscenza incompleta e la possibilità di fare symbol fusion tra più agenti
 %
 Symbolic manipulation is almost unanimously assumed to play an important role in reasoning generalization. The Binding Problem~\cite{greff2020binding} for sub-symbolic systems is an open problem concerning the generation and manipulation of symbolic entities (objects) starting from sub-symbolic stimuli. Many Neuro-symbolic approaches address this problem, by combining symbolic and sub-symbolic components, so that manipulation sub-tasks (notoriously difficult to address by Neural Networks) are dealt by the former whereas learning and noise-sensitive sub-tasks (difficult to address symbolically) are solved by the latter.
 %
 There is extensive literature in Philosophy of Science concerned with the formal definition of desirable properties for symbols and symbolic reasoning.
-%Definitions range from strict ones, as in the work by Taddeo and Floridi~\cite{taddeo2005solving}, where a ``truly'' symbolic system should be able to perform grounding while satisfying the zero semantic commitment condition (i.e., the agent must be able to develop its own semantics without external guidance), to more pragmatic ones (while still philosophic in essence), like the work by Santoro et al.~\cite{santoro2021symbolic}, where properties are defined within a meaning-by-convention framework.
+%
 In the work by Taddeo and Floridi~\cite{taddeo2005solving}, for example, a ``truly'' symbolic system has to perform grounding while satisfying the \textit{Zero Semantic Commitment Condition} (i.e., the agent must be able to develop its own semantics without external guidance). In the work by Santoro et al.~\cite{santoro2021symbolic}, properties are instead defined within a Meaning-by-convention framework: symbolic behavior is defined as the set of traits allowing an interpreter to operate within a socio-cultural setting. They identify six desirable properties, possessed by human behavior but not yet by autonomous agents, and postulate that symbolic fluency can arise as emergent behavior under Meaning-by-convention training regimes, exploiting social interactions with humans, mediated by natural language, and large training sets. According to them, symbolic systems should be: \textit{receptive}, \textit{constructive}, \textit{embedded}, \textit{malleable}, \textit{meaningful} and \textit{graded}. While these properties are certainly intuitive, they are difficult to quantify and, therefore, they cannot be exploited to guide the learning process.
-
-%\TODO{In this work, we took inspiration also from classic principles of knowledge organization~\cite{hjorland1994nine} and knowledge representation~\cite{davis1993knowledge,mccarthy2007here}.}
 
 \section{Properties of Symbolic Representations}
 \label{nesy2023:sec:psr}
 
-%Toward this goal, we propose the use of symbolic representations, with the final objective of acting both as an interface between neural and symbolic components, and as computational entities within the neural component.
 To be beneficial in a computational context, symbolic representations should possess the following desirable properties: (i.) \textit{non-ambiguity}, (ii.) \textit{purity}, (iii.) \textit{usefulness}, (iv.) \textit{symbol composability}, (v.) \textit{manipulation composability}, and (vi.) \textit{generalizability} with respect to different tasks.
 Other desirable, but possibly application-specific, properties are: (vii.) \textit{compactness}, (viii.) \textit{monotonicity}, and (ix.) \textit{invertibility} (or de-composability).
 
 \paragraph{Non-ambiguity and Purity.} \textit{Non-ambiguity} means that different entities should not be mapped to the same representation, while \textit{purity} is its dual: every entity should have the smallest possible number of representations (ideally only one each). A high degree of non-ambiguity increases downstream performance and a high degree of purity implies a stronger robustness to noise. If both properties are optimal, there is a 1-to-1 mapping between entities and their representations.
 
 \paragraph{Usefulness.} \textit{Usefulness} is the capability of improving performance for a downstream symbolic task, with respect to another representation. According to Newell and Simon~\cite{newell1972human}, a symbolic system should be able to operate with arbitrary symbols. However, this property only works under ideal assumptions of perfect non-ambiguity and purity, whereas imperfect representations may convey information more or less effectively. Moreover, an arbitrary representation does not allow to optimize for performance, preventing the use of heuristics or pruning strategies.
-% (which would negate the need for a neural component), as the presence of erroneous or noisy encodings can affect the behavior of a symbolic component. Moreover, an arbitrary representation does not allow to optimize for performance, preventing the use of heuristics or pruning strategies.
-%
 We advocate for a case-by-case evaluation of usefulness, as tasks with a large reasoning component will arguably benefit more from a concise representation, while tasks pivoting around a strong perceptual component may benefit more from redundant representations, robust to noise. It is also important to note that usefulness is necessarily a relative metric, subject to how the representation is used (e.g., a random projection processed by a powerful black-box may be more useful than a semantically-meaningful concept bottleneck processed by a linear layer). %a small usefulness with respect to a large performance may be more beneficial than a great usefulness associated with low performance.
 
 \paragraph{Symbol Composability.} \textit{Symbol composability} is the possibility of creating complex constructs (e.g., sequences, expressions, graphs, etc.) from atomic symbols and it is commonly accepted as the key component of any form of reasoning. As both perceptual information and underlying semantics are seldom ``flat'', it is often necessary to encode hierarchies of entities. Grounding complex structures can be addressed by a wide spectrum of strategies, ranging from grounding atoms into a fixed structure, to learning part-whole hierarchies from perceptual stimuli~\cite{greff2020binding}. Since different downstream tasks require different abstractions, we advocate for a semi-quantitative evaluation of symbol composability, to determine whether a given technique is beneficial, while acknowledging the difficulty in devising a quantitative metric.
@@ -57,31 +42,11 @@ Although useful from a practical perspective, because it decomposes a complex tr
 
 \paragraph{Generalizability.} \textit{Generalizability} is the capability of reusing the same representations for different downstream tasks, paving the way for more efficient training, multi-task learning, the discovery of shared structure, et cetera.
 An arbitrary representation is also trivially general, however it also negates all the advantages of a general representation.
-%\textcolor{red}{Definizione molto debole e poco motivata. TOGLIAMOLA E METTIAMOLA SOTTO TRA LE "OTHER PROPERTIES"...?}
 
 \paragraph{Other Properties.} Among other desirable properties, the size of a \textit{compact representation} approaches the Shannon limit for the distribution of entities it encodes (useful for every downstream task, but especially important for those in \textsc{EXPTIME} or above), a \textit{monotone} representation allows to define an ordering between representations mirroring an ordering between entities (this is particularly useful for applications involving temporal steps, sequences, counting objects, etc.), and an \textit{invertible} representation can allow to undo a manipulation to retrieve an input symbol from an output (useful for example in the case of deduction, backward planning, diffusion processes, etc.).
 
-
-%\textcolor{red}{IMPORTANTE: Perché queste proprietà implicano una rappresentazione discreta?}\textcolor{blue}{Perché le rappresentazioni continue sono, come hai scritto sotto, non pure, ambigue, e con limiti di manipolazione... Non basta?} \textcolor{red}{In qualche modo mi sembra "poco"}
-
-%Existing representations present some, but not all of these properties.
-%One-hot encoding is the most pure and general representation, however it is also arbitrary (unless it is relaxed into a continuous softmax, it cannot propagate gradients) and non-compact. Manipulation composability is extremely limited, as it can only be performed in terms of permutations, and symbol composability is non-trivial.
-%(e.g., it may require an encoder followed by a pooling mechanism).
-%
-%Continuous embeddings are useful and general, but they lack in purity and may be ambiguous. Manipulation composability is extremely good, if implemented by transformers, and very limited symbol composability can be performed by algebraic operations in embedding space.
-%
-%To the best of our knowledge, symbolic properties of both probabilistic discrete latent representations and deep hashing methods have not been studied yet, and their application outside their traditional domains (variational autoencoders and retrieval systems) is relatively unexplored. We conjecture they both can achieve good generalizability and usefulness, provided they are learned with additional regularizations, but lack either kind of composability.
-%
-%\textcolor{blue}{COSA SI INTENDE QUI PER INTERFACCE?} \textcolor{red}{I punti di confine tra la componente neurale e quella simbolica (es. output neurali che diventano input simbolici, o viceversa)}
-%Finally, discrete tensors acting as interfaces between neural and symbolic components, achieve the maximum degree of composability (delegated entirely to the symbolic part), along with the potential for high levels of purity and non-ambiguity (handled by the neural one). However, they have limited generalizability and, unless it is possible to backpropagate through the symbolic component, they may have reduced (or absent) usefulness.
-%\textcolor{magenta}{Meglio così?}
-
-%In appendix \ref{nesy2023:sec:spm}, we provide examples on how these properties may be quantified in practice.
-
-
 \section{Symbolic Representation Learning}\label{nesy2023:sec:related}
 Neural discrete representations have been successfully used for a plethora of tasks.
-%We identified in the literature a few categories of approaches: embedding tables, probabilistic latent spaces encoding discrete probability distributions, deep hashing approaches.
 %
 Embedding tables encode a finite (and thus discrete) set of objects with a continuous representation, therefore, using signal processing terminology, they should be more correctly identified as ``sampled'' approaches. 
 Vector-quantized Variational Auto-encoders (VQ-VAEs)~\cite{van2017neural} exploit a quantized embedding table, effectively making the representations discrete. Such representations avoid posterior collapse, achieving outstanding results in image and sound generation tasks.
@@ -92,38 +57,19 @@ Discretization is achieved by annealing a temperature parameter to zero, and it 
 The REINFORCE~\cite{williams1992simple} framework is capable of producing unbiased gradients, at the expenses of high variance and an inefficient sampling procedure.
 The CatLog-Derivative trick~\cite{de2023differentiable} addresses both issues of biased gradient estimation and high variance, allowing to differentiate through categorical distributions.
 %
-%A notable mention of neuro-symbolic applications expoiting discrete probabilistic latent spaces is Latplan~\cite{asai2018classical}, a variational autoencoder capable of generating a PDDL specification, which can then be solved by a traditional symbolic planner, from pairs of images (before and after) demonstrating actions. Specific architectural constraints are enforced in order to guarantee STRIPS-like semantics, so that multiple binary latent spaces can encode a state as a set of fluents which are either true or false, and an action as a set of added and removed fluents.
-%The learning signal is further strenghtened by enforcing consistency when applying actions both in a forward and a backward fashion (i.e., if applying action $a$ to state $s$ produces $s'$, then "removing" the effects of $a$ from $s'$ should result in $s$), however the actual representation does not take into account the final planning task and the majority of the learning signal is perceptual, coming from the reconstruction of the two images from the discrete latent representations of states and actions.
-%
 Deep Hashing methods~\cite{luo2020survey} deal with efficient information retrieval, exploiting binary latent representations which are then used to address buckets by means of Hamming distance. Research directions in this area mainly focus on non-differentiability issues of discrete representations and the Hamming function, as well as efficiency, in terms of number of training samples, availability of annotations and retrieval performance.
 %
-%Symbol composability is the capability of merging multiple symbols into one, while manipulation composability is the possibility of expressing an operation in terms of successive transformations from one input symbol to an output symbol. \textcolor{red}{Spostare nell'introduzione o riprenderlo meglio in sezione 3?}
-%
-%Layers in a neural network are a composition of different functions and thus are a form of manipulation composability, however, if certain types of constraints are applied to the learned function, they can be restricted to the domain of inductively defined manipulations (such as those governing logic formulae, arithmetic expressions, grammars, etc.).
-%Recurrent neural networks~\cite{medsker2001recurrent} learn a function capable of producing the target value when applied recursively to the input (and an accumulator called hidden state). They are notoriously difficult to train, both due to convergence issues (mitigated by specific subclasses, such as LSTM~\cite{graves2012long}) and the need of sequential training.
-%
-%Transformers~\cite{vaswani2017attention} are another popular approach for continuous representations, which are composable, both in the sense of symbol and manipulation composability. They exploit the attention mechanism to iteratively refine a context-independent input representation into a context-dependent output representation (symbol composability). The number of refinements is fixed by the network architecture and, in general, each attention head in each transformer block learns a different function. ALBERT~\cite{lan2019albert} is a transformer where parameter sharing strategies are applied, effectively achieving manipulation composability as the iterated (a fixed number of times determined by the number of blocks) application of the same function.
-%Transformers are effective only when combined with extremely large amounts of training data and require extensive self-supervised pre-training to help convergence.
-%In terms of manipulation composability, transformers take as an input a fixed size set of representations and produce another set with the same cardinality as output. However, they can also be used in an autoregressive fashion~\cite{radford2018improving}, to produce the representation of a new object, which is then fed back to the model.
-%
-%Many applications in neuro-symbolic AI~\cite{marra2021statistical} try to approach complex problems by integrating perceptual and reasoning signals, often by backpropagating symbolic information into a neural component.
 Among Neuro-symbolic approaches, methods feeding Combinatorial Optimizers with neural information must deal with discrete representations and how to back-propagate through ill-defined gradients.
 A plethora of solutions~\cite{agrawal2019differentiable,poganvcic2020differentiation,fredrikson2023learning,wang2019satnet} have been proposed to define a gradient which is both well-behaved and useful as a learning signal which allows to exploit information from the downstream task of Combinatorial Optimization. These techniques however are often method-specific and are difficult to generalize to other tasks (e.g., planning or deduction).
 
 \subsection{Challenges of Symbolic Representation Learning}
 \label{nesy2023:sec:cl}
 The challenges related to the problem of learning symbolic representation, are strongly coupled with the necessity of guaranteeing adherence to some, or all, of the desirable properties highlighted so far.
-It is not possible to provide a ready-to-use methodology, as each instance is unique and heavily dependent on application domain and chosen implementation. However, there exist some common challenges characterizing symbolic representation learning: (i.) \textit{differentiability} through discrete bottlenecks, (ii.) \textit{approximation errors} when using continuous relaxations, (iii.) \textit{limited knowledge availability}, (iv.) \textit{evaluating representation goodness}.%, and possibly \textit{additional challenges}.
+It is not possible to provide a ready-to-use methodology, as each instance is unique and heavily dependent on application domain and chosen implementation. However, there exist some common challenges characterizing symbolic representation learning: (i.) \textit{differentiability} through discrete bottlenecks, (ii.) \textit{approximation errors} when using continuous relaxations, (iii.) \textit{limited knowledge availability}, (iv.) \textit{evaluating representation goodness}.
 
-%We hereby discuss the challenges related to the problem of learning symbolic representations having the properties highlighted above. 
-%(i) the reasoning-learning dichotomy, (ii) learning discrete representations through gradient-descent, (iii) information flow across representations, (iv) which annotations should be available during training,  (v) which regularities could be exploited, (vi) how to define quantitative evaluation metrics.
-%
-%We are not going to provide a ready-to-use methodology, but we will rather focus on the challenges that need to be addressed to learn good symbolic representations and we will discuss how well existing methods fit in this setting.
 \paragraph{Differentiating Through Discrete Bottlenecks.}
 Discretization can be modeled by the application of some step function to a continuous input,\footnote{Classical examples are the sign, floor and ceil functions.} which is characterized by a meaningless gradient (zero everywhere, except at discontinuities).
 Information flow is effectively stopped, when learning relies on gradient-based optimization, as the chain rule will propagate zeroes every time a step function is composed to any other function.
-%
-%Gradient-based optimization methods, since their derivative is zero everywhere except in discontinuity points. This characteristic effectively stops \textbf{information flow}, because the chain rule would cause vanishing gradients.
 %
 Existing methods mitigating this issue are not general and introduce additional problems.
 Residual connections between continuous and discrete representations are a naive and somewhat ineffective approach: since gradient only flows along the continuous path, the learning process is encouraged to discard information coming from the discrete one.
@@ -131,63 +77,31 @@ A temperature parameter scaling inputs for a sigmoid or softmax non-linearity ca
 Straight-through estimation replaces a non-differentiable non-linear activation with the identity function in the backward pass, hence ``skipping'' the activation during chain rule computation. This approach works well in those cases in which the non-linearity closely approximates the identity,
 %(e.g., $sign(x)$, provided that input values do not lie far from zero),
 but may provide misleading gradient updates when this assumption does not hold.
-Methods such as the ones exploited by differentiable combinatorial optimizers~\cite{fredrikson2023learning} are extremely powerful techniques for back-propagation, based on building gradients as finite differences between the input representation and the minimal perturbation acting as a counterfactual. Although effective and representation-centric, they require binary decision boundaries and are slow to compute. %(since they need to call the symbolic downstream component for each perturbation).
+Methods such as the ones exploited by differentiable combinatorial optimizers~\cite{fredrikson2023learning} are extremely powerful techniques for back-propagation, based on building gradients as finite differences between the input representation and the minimal perturbation acting as a counterfactual. Although effective and representation-centric, they require binary decision boundaries and are slow to compute.
 
 \paragraph{Approximation Error in Relaxed Representations.}
 Optimizing discrete representations through continuous loss functions pose additional challenges, due to highly non-convex landscapes. 
 %
-%An additional issue arising in gradient-based methods is the \textbf{choice of the loss function}.
 Similarly, symbolic computations are usually composed of non-differentiable steps, and therefore it may be challenging to devise both a quantitative evaluation of the representation, and an optimizable continuous relaxation or upper bound of the learning objective.
-%
-%\textcolor{red}{Non riesco ad argomentare bene questa parte.}
 %
 Assignment-based manipulations (e.g., deduction, Hungarian matching, etc.) can be reformulated within a fuzzy or probabilistic framework, allowing for a differentiable objective, with suitable thresholding operations performed at inference time, which can however present boundary instability issues.
 %
 Retrieval-based approaches heavily rely on non-differentiable functions comparing different representations (such as the Hamming distance) and often require to devise a continuous upper bound~\cite{norouzi2012hamming}.
-%Altre problematiche relative alla scelta della loss?
 
 \paragraph{Limited Knowledge Availability.}
-High-quality training data is often expensive to annotate and the ideal condition in which supervision is provided for every concept associated to each data point may be unachievable in real-world applications. %Representation learning in general, but, more importantly so, symbolic representation learning
-Symbolic Representation Learning should exploit intrinsic characteristics which reduce the quantity and quality of annotations required, ideally up to the completely unsupervised discovery of symbols and their compositions. %\textcolor{red}{in a way similar to predicate invention in ILP and statistical learning domains (?)}
-%We propose to categorize the degree of supervision available for a given task/application domain, so that methodologies can address challenges specific for each of them:
+High-quality training data is often expensive to annotate and the ideal condition in which supervision is provided for every concept associated to each data point may be unachievable in real-world applications. 
+Symbolic Representation Learning should exploit intrinsic characteristics which reduce the quantity and quality of annotations required, ideally up to the completely unsupervised discovery of symbols and their compositions. 
 In general, one could provide (i.) \textit{complete supervision} on concepts, (ii.) \textit{supervision on the downstream task} only, (iii.) \textit{no supervision} at all, (iv.) \textit{weak or partial supervision} in the form of relations between entities (e.g., monotonicity constraints, ontologies, equivalence classes between entities, etc.).
 %
 Knowledge plays an important role both in learning and reasoning. Being able to learn a representation by means of knowledge injection is not only a way of reducing the amount of data required to achieve a ``good'' representation, but also greatly improves its usefulness.
-%, a symbolic representation learning methodology should thus allow the injection of arbitrary knowledge in the process.
-%This characteristic is strongly related (but not limited) to tasks where only relations are known (category iv) and its implementation is necessarily method-specific. As representations and their properties get strongly coupled, it is also difficult to fully disentangle contributions of the main learning process and of additional knowledge, therefore knowledge injection is also strongly related to challenges in learning through gradient-descent.
-%This challenge is strongly related to the way in which supervisions are provided, as well as to the problem of learning through gradient-descent.
 %
 Knowledge can be injected in the form of (i.) \textit{representational constraints} (e.g.,
 %the representation of ordered objects should be monotonic, or 
-distances between representations should mirror paths inside a knowledge graph), (ii.) \textit{constraints related to the downstream task structure} (e.g., as it happens with classical planning~\cite{asai2018classical})
-%(e.g., \textcolor{red}{XXXXX in questa categoria vorrei mettere degli esempi più "semantici", dove la rappresentazione sfrutta caratteristiche del downstream task, tipo in latplan dove le azioni sono add/delete fluents})
-, (iii.) \textit{manipulation constraints} (e.g., symbols should be combined according to a generative grammar%, or a binary representation should be refined without altering certain bits encoding some manipulation-invariant property
-).
-%Knowledge injection could exploit techniques such as architectural constraints, semantic-based regularization~\cite{diligenti2017semantic}, empirical model learning~\cite{lombardi2017empirical}, conditioning from a symbolic component~\cite{misino2022vael}, unstructured knowledge integration~\cite{ruggeri2022towards}, etc.
+distances between representations should mirror paths inside a knowledge graph), (ii.) \textit{constraints related to the downstream task structure} (e.g., as it happens with classical planning~\cite{asai2018classical}), (iii.) \textit{manipulation constraints} (e.g., symbols should be combined according to a generative grammar).
 
-%\textcolor{blue}{An additional challenge, closely related to knowledge injection, is \textbf{handling inconsistencies}, as multiple sources of truth (e.g., a constraint and data samples) may be conflicting.} \textcolor{red}{Debole ---> SINCERAMENTE QUESTA FRASE LA TOGLIEREI, NON AGGIUNGE NIENTE DI RILEVANTE.}
-
-\paragraph{Evaluating Representation Quality.} Regarding evaluation metrics for symbolic representations, we do not believe in the existence of a one-size-fits-all collection of metrics, in virtue of different downstream applications, for which different subsets of desirable properties are needed. %To clearly identify what and how each metric evaluates, and to encourage research in this area, we advocate for the need of a taxonomy of evaluation measures (which could be mirrored by specific benchmark suites).
-In order to design a suitable metric, one should consider: (i.) the \textit{target property}, (ii.) the \textit{type of supervision} required, (iii.) the \textit{interaction with learning}. %, (iv) application domain.
-%
-%By target property we mean the property quantified by the metric: we provide some examples in Appendix~\ref{nesy2023:sec:spm}.
-%\textcolor{red}{: for example, precision can quantify non-ambiguity (but only for supervised representations), the Kullback-Leibler divergence against a one-hot encoding can address purity (for supervised settings), mutual information between representation and downstream task can model usefulness, an average performance (e.g., F1 score) across tasks can quantify generalizability.} %, and entropy can measure compactness \textcolor{red}{Togliere visto che non parliamo di compactness?}.
-%
-%An important open question along the first dimension is how to \textit{quantify composability}. %\textcolor{red}{Forse lo metterei in grassetto, altrimenti si perde nel paragrafo in mezzo al resto}
-%
-%The second dimension addresses the availability of ground truth with respect to the four categories of quality of annotations mentioned above. For example, in a metric learning setup only the equivalence relation between inputs is known (category iv), and purity and non-ambiguity could be measured by re-identification metrics such as mAP@k, while in planning from visual stimuli where only feedback on the downstream task is available (category ii), usefulness of representations could be measured by the number of failed plans, or the average length of successful plans.
+\paragraph{Evaluating Representation Quality.} Regarding evaluation metrics for symbolic representations, we do not believe in the existence of a one-size-fits-all collection of metrics, in virtue of different downstream applications, for which different subsets of desirable properties are needed. 
+In order to design a suitable metric, one should consider: (i.) the \textit{target property}, (ii.) the \textit{type of supervision} required, (iii.) the \textit{interaction with learning}.
 %
 Differentiable metrics may be also exploited during learning. Along this dimension we can distinguish (i.) \textit{truly differentiable metrics}, (ii.) \textit{non-differentiable metrics}, (iii.) metrics with \textit{differentiable proxies} (e.g., Hamming distance approximated by binary cross-entropy), (iv.) \textit{compliance to logic or combinatorial constraints}.
 In the latter case it may be possible to define, for example, complex purity measures taking into account hierarchies of entities, or logic formulae against which compliance can be evaluated with techniques such as Semantic-based Regularization.
-
-%\paragraph{Additional Challenges.}
-%Additionally, specific challenges arise in specific scenarios. For example, in a \textbf{multi-agent setting}, agents may share information in the form of visual stimuli or directly as symbols. In the first case, an additional challenge is to ensure coherence across different representations; in the second case, the learning process should pursue consistency, so that the same symbol has the same meaning for all agents, and should also handle the case in which an agent may receive new symbols it never encountered before.
-%
-%In the case of \textbf{continual learning}, additional challenges are posed by handling catastrophic forgetting (not only in the sense of poor performance in forgotten tasks, but also in the sense of forgetting or overwriting the ``meaning'' of rarely observed representations), guaranteeing elaboration tolerance when new information is discovered, and generally requiring a stronger robustness to noise. As these require case-specific considerations, we leave their discussion to future work.
-
-%\textcolor{red}{Questa categoria è più debole delle altre. Provare ad argomentare meglio perché è importante:}
-%Finally, along the last dimension, we address which application domain is more suitable for a given metrics. A non-exhaustive list of application domains could be: (i) Classification (e.g., precision for non-ambiguity), (ii) Clustering (e.g., mutual information between clusters for non-ambiguity), (iii), Information retrieval (e.g., number of collisions), (iv) Symbolic downstream tasks (e.g., specific metrics for usefulness), etc.
-%An open research question is how to effectively evaluate the joint performance of the representation and the downstream reasoner in neuro-symbolic methods, since downstream performances alone may be misleading and do not provide useful information which could be exploited to improve representations.
-
-%When using an arbitrary representation, reasoning is completely decoupled from learning, and the whole process is performed in two steps, where the learning component only has the role of a noise-robust encoder. On the other hand, useful representations can synergize reasoning and learning, allowing for faster convergence of the neural component and the exploitation of stronger heuristics by the symbolic component. We strongly encourage useful representations, while also acknowledging the fact that, in some cases, an arbitrary one may be more suitable, or even necessary, for instance when it is unclear how to link a representation with its manipulation. Finally, it is important to note that if there is no dicothomy, i.e., both representation learning and manipulation are performed by a single framework (like a neural approach), there is no real advantage in using arbitrary representations.
 

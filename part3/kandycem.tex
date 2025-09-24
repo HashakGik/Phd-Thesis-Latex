@@ -12,13 +12,6 @@ In this chapter we explore whether time, in the form of a curricular progression
 The content of this chapter is adapted from our CoLLAs 2024 conference paper~\cite{lorello2024continual}.
 
 \section{Background}
-%A long-standing challenge in artificial intelligence (AI) is that of learning representations of the world, that can be associated to entities, and further composed, manipulated, and re-used in the form of symbols~\cite{greff2020binding,lorello2023challenge}.
-%
-%This kind of task is rapidly gaining traction, especially in the deep learning community, given the increasing demand for interpretable % and accountable 
-%AI systems~\cite{ghosh2020interpretable,novelli2023accountability}.
-%
-%\textcolor{red}{The problem becomes particularly challenging in the continual learning setting, where concepts must be incrementally learned, while preserved across tasks in order to prevent catastrophic forgetting~\cite{marconato2023neuro}. In this paper we aim to move the bar even higher, by proposing a method for continual concept learning in a setting where no concept supervision is provided, and tasks are organized in a curriculum. % by a teacher through a curriculum. Such a scenario is largely overlooked in the literature.}
-%
 Humans naturally discover new concepts through time, without the need of ``supervision''. This is especially true in child development, during which autonomous exploration leads to concept formation~\cite{damon2008child}, but remains a relevant form of learning also for adults.
 %Discovering concepts through time is a natural way of learning in humans, and especially in children~\cite{damon2008child}, where ``supervisions'' are limited. 
 In the case of machines, unsupervised concept discovery intrinsically requires suitable inductive biases~\cite{locatello2019challenging}. Incrementally disclosing concepts over time is not only aligned with what happens in humans, but it can also provide precious information for Machine Learning purposes, capable of guiding discovery along a sequence of smaller, but feasible, steps, aimed at building a vocabulary of concepts relevant for a specific domain.
@@ -35,20 +28,15 @@ Some attempts to perform unsupervised learning of disentangled representations, 
 %
 On a different perspective, a first attempt of exploiting semi-supervised concept learning in a Continual Learning setting has been proposed by Marconato et al.~\cite{marconato2023neuro}, who focus on a Neuro-symbolic scenario where domain background knowledge is available, and it is exploited to consolidate concept learning with supervisions across a sequence of tasks. The problem is addressed by modeling the conditional probability distribution of concepts with respect to the input data, and by enforcing the stability of such probability distribution through time. The approach is coupled with a Neuro-symbolic system, where background knowledge is exploited to drive learning and avoid reasoning shortcuts.
 
-%The approach we propose in this paper is based on a
-
-\section{Methodology} %\textcolor{red}{2 pag.}
+\section{Methodology}
 \label{cem:sec:method}
 We focus on a teacher-student scenario where the teacher presents the student with samples of a sequence of $N$ binary tasks, considered appropriate to improve the student understanding skills. %The teacher proposes a sequence of $|\mathcal{T}|$ binary tasks, with the 
 The student is expected to get better at discriminating examples of the selected tasks and also to progressively acquire an improved representation of the world, developing, reusing and mixing latent concepts to solve each task. These concepts are not made explicit, thus no supervision is given about them.
-Data is provided to the learning agent (student) through a potentially lifelong stream where, at each time instant $t$, a small batch of samples $\sX^{(t)}$ (from a certain task) is made available, together with their task-id and their task-level labels $\sY^{(t)}$. Concept labels $\sC$ are never exposed to the agent, but their ground truth will be used to assess the quality of autonomously developed concepts. %, being $|X^{(t)}|$ the batch size. %We indicate with $X^{(t)}_h \in \mathbb{R}^{d}$ the $h$-th element of the batch. In the most extreme case, $X^{(t)}$ is composed of a single example: in that case, here and in the rest of the paper, when not explicitly needed, we will drop the superscript $(t)$ \textcolor{red}{Questa frase è rimasta da KANDY Benchmark? Non abbiamo un setting continual online qui}. 
+Data is provided to the learning agent (student) through a potentially lifelong stream where, at each time instant $t$, a small batch of samples $\sX^{(t)}$ (from a certain task) is made available, together with their task-id and their task-level labels $\sY^{(t)}$. Concept labels $\sC$ are never exposed to the agent, but their ground truth will be used to assess the quality of autonomously developed concepts. 
 The agent is aware of task switches, thus we are in a Task-incremental setting~\cite{van2022three}.
 %
 The issues with this setting are not only those typical of Continual Learning, such as catastrophic forgetting~\cite{parisi2019continual} at the task-level, but also internal stability issues that might lead to concept drift~\cite{marconato2023neuro}. As a matter of fact, even if the set of concepts $\sC$ is not defined in advance (and, in general, it is not known at all), the agent must avoid forgetting previously developed concepts. %, if they had been helpful in solving older tasks. 
-The agent is also expected to learn how to compose the already stable concepts with newly discovered ones. %. When contextualizing this setting with CBMs, the bottleneck must be constrained to preserve useful information and favour composability, without supervision provided at such level, 
-%making the problem very challenging.
-%
-%\subsection{Problem formulation}
+The agent is also expected to learn how to compose the already stable concepts with newly discovered ones.
 %
 We propose to tackle this scenario introducing specific criteria to constrain the Neural Network in order to (i.) \textit{favour the development of %either strongly active or strongly inactive concepts, 
 strongly polarized concept activations}, (ii.) \textit{increase the correlation between tuples of concepts and tasks}, (iii.) \textit{progressively promote stability over time}. The first requirement is fundamental in concept-based learning, since it makes it easy to take a crisp decision on the state of each concept $j$ given its dense activation $\evc_j$, promoting interpretability. The second requirement ensures the presence of an inductive bias linking the final task with a subset of active/inactive concepts, ensuring that the agent is profitably learning to organize its internal knowledge. The final requirement is typical of Continual Learning, to discourage catastrophic forgetting, %even if, in this case, it applies also 
@@ -69,14 +57,7 @@ exploiting the $\normlone$ norm applied to pairs of concept vectors:
 The Metric Learning problem is handled by comparing triples of input patterns, as typical in the popular Triplet Loss framework~\cite{dong2018triplet}. For each task $f^{(t)}: \sX^{(t} \mapsto \sY^{(t)}$, a triple is composed of the concept activation vectors ($\vc$) (i.) of an {\it anchor} sample, (ii.) of a sample with the same task-level label of the anchor (i.e., task-positive or task-negative, named {\it positive} element of the triple), and (iii.) a third example with opposite task-level label (i.e., task-negative or task-positive, respectively -- named {\it negative} element). Minimizing the Triplet Loss favors the development of similar concept vectors for examples with the same label, and different vectors for pairs with different labels. It is important to remark that, within each task, examples with the same task-level label are expected to share some concepts (the ones that are relevant for the considered task), while there is no need to force coherence on the remaining ones. For this reason, the criterion we propose must be interpreted as a soft regularizer and not as a strongly enforced constraint.
 %
 %In detail, within each mini-batch from the data stream, 
-We build a set of triples performing Semi-hard Negative Mining~\cite{schroff2015facenet} on mini-batches of the dataset. %considering the example belonging to it. 
-%\TODO{CHECK FROM HERE} \TODO{FIX NOTATION}
-%Given a dataset $\gD^{(t)} = \langle\sX^{(t)}, Y^{(t)}\rangle$, a mining function is any function $\xi: \sX^{(t)} \times \sY^{(t)} \mapsto \sX^{(t)} \times \sX^{(t)} \times \sX^{(t)}$, returning triples of data points, according to some criterion.
-%The Semi-hard Negative Mining criterion exploits a distance function ($D_H$ in our case) and a margin hyper-parameter $\mu$ to select a triplet such that the distance between the selected anchor and negative is larger than the distance between anchor and positive, while  AAAAAAA (i.e., those samples that keep the loss function meaningful throughout the learning process).
-%
-%Formally, let $\xi_{\mathcal{SH}}(X^{(t)}, Y^{(t)})$ be the mining function that returns $n^{(t)}$ triples out of a mini-batch of data, in the form of the set $\{A^{(t)}$, $P^{(t)}$, $N^{(t)}\}$, composed of the (ordered) collections of concept activation vectors of the three components of the mined triples, i.e., (1) anchors, (2) positives, and (3) negatives, %of the mined triples, 
-%respectively.  
-%Labels for triplets correspond to task labels, thus when the mined anchor is task-positive (respectively task-negative), the mined positive will also be task-positive (resp. task-negative) and the mined negative will be task-negative (resp.task-positive).
+We build a set of triples performing Semi-hard Negative Mining~\cite{schroff2015facenet} on mini-batches of the dataset. 
 Plugging the (relaxed) Hamming distance in a Triplet Loss with margin $\mu$, we get the Hamming triplet loss $\mathcal{L}_H$:\footnote{If no triples can be mined within the mini-batch, the loss assumes a default value of 0.} 
 \begin{equation*}
 	%d^h(\vx, \vy) = \normlone(\vx - \vy)\\
@@ -89,28 +70,10 @@ The margin hyper-parameter $\mu$ assumes an intuitive interpretation, correspond
 %which is expected between pairs of concept activations of any positive-negative pair.
 
 %\vspace{-1mm}
-\paragraph{Concept Replay.} Enforcing $\mathcal{L}_H$ is not enough to guarantee stability on the learned concepts, that might incur in non-predictable dynamics over time. For this reason, we developed a novel replay strategy, based on an augmented replay buffer which is used both for experience replay at the level of task objective and as feature replay at the concept level. The replay buffer is governed by a Class-balanced Reservoir Sampling~\cite{chrysakis2020online} policy, and it memorizes, for each input sample, both the given task-level label and the binarized concept representation $\hat{\vc}$. %\TODO{We indicate with $B_X$, $B_Y$, and $B_{C}$ the buffered data, that is composed of the buffered input samples ($B_X$), their task-ID and task-level labels ($B_Y$), and the {\it binarized} concept representations ($B_{C}$).}
-%After inference, probability scores are %%thresholded at $\tau = 0.5$, to produce binary representations
-%binarized ($\tau = 0.5$), and they are finally stored in the buffer. 
-%In order to avoid memorizing noise, due to ``unripe'' representations, storing the concepts associated with freshly added samples is delayed until the end of the current epoch. 
+\paragraph{Concept Replay.} Enforcing $\mathcal{L}_H$ is not enough to guarantee stability on the learned concepts, that might incur in non-predictable dynamics over time. For this reason, we developed a novel replay strategy, based on an augmented replay buffer which is used both for experience replay at the level of task objective and as feature replay at the concept level. The replay buffer is governed by a Class-balanced Reservoir Sampling~\cite{chrysakis2020online} policy, and it memorizes, for each input sample, both the given task-level label and the binarized concept representation $\hat{\vc}$.
 %
 Concept replay is implemented as a second round of Hamming Triplet Loss, exploiting the buffered concepts. Since the buffer $\gB$ contains data from (a subset of) the tasks seen so far, we mine a mini-batch of triples for each of them, by means of a uniform sampling strategy. %We indicate with $\xi_{\mathcal{U}}(B_X, B_Y, B_C)$ the triplet mining function, which is different from the already introduced $\xi_{\mathcal{SH}}(X,Y)$ for the following reasons. 
-The anchor samples, taken from $\gB_X$, are fed to the net, computing fresh concept representations $\vc$'s, while the concept vectors for the positive and negative samples of the triples are directly retrieved from $\gB_{C}$, thus they are binary vectors.\footnote{Since data from the current task is directly provided to the network (i.e., it comes from the input stream), the anchors of the triples for the current task are sampled from $\sX^{(t)}$. We avoid making this explicit, to keep the notation simple.} Such binary vectors act as constant and polarized targets. Hence, when minimizing the Triplet Loss, only the concept activations of the anchors are altered, pushing them toward (resp. far away from) the constant binary targets of the positive (resp. negative) elements. As a result, buffered binary concepts implicitly help polarize the learned concept probabilities towards 0 or 1, and they are more storage efficient, which is a crucial property to limit the memory used by the buffered samples. In order to avoid aging of the binary concepts in $\gB_{C}$, at the end of each epoch $\gB_{C}$ is recomputed from scratch. %&updating representations that were only partially developed at the beginning of the task.
-
-\iffalse
-Binarization of concepts is helpful in terms of storage efficiency and also to favour polarization of concept activations. %, as will be clear in the following.
-%\textcolor{blue}{Non anche interpretability?} \textcolor{red}{Nel buffer non credo sia applicabile, visto che poi non facciamo esperimenti per vedere cosa contiene}
-%
-Concept replay is used for a second round of Hamming triplet loss. %At each training step, every element of the current batch is used as anchor, while fixed concept representations from two random samples, one positive and one negative, are uniformly selected from the replay buffer. If the task label of the anchor is positive, the positive and negative buffered samples directly form a triple along with the anchor, otherwise, their role is swapped (i.e., the buffered positive is used for the anchor-negative distance, and viceversa).
-For each past task $t_p$, triples are mined from the buffer with a uniform sampling strategy (function $\xi_{\mathcal{U}}$) as follows: three samples are randomly selected, as anchor, positive and negative, among the samples corresponding to task $t_p$ only. Labels of positive and negative samples are made coherent with the anchor (i.e., they are swapped if the anchor is negative). The anchor image is fed to the neural network, while positive and negative representations are taken directly from the concept buffer, to encourage representation stability, by backpropagating only through the anchor (this is in contrast with the ``vanilla'' Hamming triplet loss computed within batch samples, which backpropagates through all three).
-A similar process is performed for current task ($t_c$). However, in this case anchors are taken from the batch, while positives and negatives are sampled from the buffer.
-%
-%In contrast with the ``vanilla'' Hamming triplet loss within batch samples, concept replay is only able to adjust representations of anchor values, as positive and negative samples are frozen in the replay buffer until the end of the epoch.
-The use of binary buffered concepts %, and the fact that gradients can only flow through anchors, 
-implicitly polarizes learned concept probabilities towards 0 or 1.
-%
-Concept replay contributes to the total loss with two terms: the aforementioned Hamming triplet loss (applied to buffered samples) and the traditional experience replay loss.
-\fi
+The anchor samples, taken from $\gB_X$, are fed to the net, computing fresh concept representations $\vc$'s, while the concept vectors for the positive and negative samples of the triples are directly retrieved from $\gB_{C}$, thus they are binary vectors.\footnote{Since data from the current task is directly provided to the network (i.e., it comes from the input stream), the anchors of the triples for the current task are sampled from $\sX^{(t)}$. We avoid making this explicit, to keep the notation simple.} Such binary vectors act as constant and polarized targets. Hence, when minimizing the Triplet Loss, only the concept activations of the anchors are altered, pushing them toward (resp. far away from) the constant binary targets of the positive (resp. negative) elements. As a result, buffered binary concepts implicitly help polarize the learned concept probabilities towards 0 or 1, and they are more storage efficient, which is a crucial property to limit the memory used by the buffered samples. In order to avoid aging of the binary concepts in $\gB_{C}$, at the end of each epoch $\gB_{C}$ is recomputed from scratch.
 
 \paragraph{Aggregated Loss Function.} Let $\langle\sX^{(t)}, \sY^{(t)}\rangle$ be a fresh mini-batch from the current dataset, $\langle\gB_X, \gB_Y, \gB_C\rangle$ a mini-batch sampled from the replay buffer, $\xi_{SH}$ the Semi-hard Negative Mining function, and $\xi_{U}$ the Uniform Mining function, then the total loss function $\mathcal{L}$ is the sum of four contributions:\footnote{The Mining functions $\xi_\cdot$ return mini-batches $\langle\mC_A, \mC_P, \mC_N\rangle$ of triples in concept space.}
 \begin{align*}
@@ -121,13 +84,6 @@ Concept replay contributes to the total loss with two terms: the aforementioned 
 	\label{cem:eq:loss}  
 \end{align*}
 The (i.) \textit{task-level loss} is a binary cross-entropy ($\mathcal{L}_{\mathrm{BCE}}$) applied to the batch of input data ($\sX$, $\sY$). (ii.) \textit{Task-level experience replay} is based on the same loss, applied however to buffered data ($\gB_X$, $\gB_Y$) and weighted by $\lambda_r > 0$. Finally, the contrastive term, weighted by $\lambda_h > 0$, is the average of the \textit{Hamming Triplet Loss} applied to (iii.) input and (iv.) buffered samples.
-
-
-
-
-
-%\subsection{Use case}
-%\label{cem:sec:usecase}
 
 \begin{figure}
 	\centering
@@ -175,132 +131,17 @@ Although datasets have a negligible imbalance between task-positive and task-neg
 which presents basic concepts first, and then, in the later tasks, combines them for more advanced problems. This allowed us to %take a clear decision on the proper time in which model selection should be performed, considering specific task boundaries which correspond to 
 unambiguously identify the last task in which a new basic/ground truth concept is introduced (task 8 in \textsc{KANDY-Concepts-1} and the end of task 17  in \textsc{KANDY-Concepts-2}), and the subsequent task are excluded from the validation procedure.\footnote{This idea is inspired by human education, in which a teacher is well aware, not only of the optimal order in which topics should be presented to students, but also at which point should their performance be evaluated for the best diagnosis of the learning process.} This choice makes the Task-incremental learning experience even more challenging when compared to the Joint case, where validation data from all the tasks is available. All the results of this chapter refer to the test sets, using the best model found with the described validation criterion.
 
-%n task-incremental settings, validation should be performed after a certain number of tasks has been observed, to mimic realistic scenarios \textcolor{red}{CITAZIONE}, but it is also common to perform model selection at the end, after all the tasks have been observed, which has the advantage of reproducibility, at the expenses of a more unrealistic setting. In our case we assume tasks in curricular form, i.e., organized in a way which encourages learning of concepts in a structured way. Under this assumption, it is possible to make informed decisions about the proper time in which model selection should be performed.\footnote{This idea is inspired by human education, in which a teacher is well aware, not only of the optimal order in which topics should be presented to students, but also at what point should their performance be evaluated for the best diagnosis of the learning process.} We decided to perform model selection on validation sets at specific task boundaries which correspond to the last task in which a new ground truth concept is introduced. These boundaries correspond to the end of task 8 for \textsc{KANDY 1} and the end of task 17 for \textsc{KANDY 2}.
-
-
-
-%The training loop is described by algorithm \ref{cem:alg:joint}.
-%balance\_task(ALL)
-%for task\_epoch in range(epochs):
-%  for each batch:
-%  	compute loss on batch: cls + triplet
-%update evaluation metrics
-
-%\begin{algorithm}
-%\caption{TODO: JOINT TRAINING LOOP}\label{cem:alg:joint}
-%\begin{algorithmic}
-%\Require $n \geq 0$
-%\Ensure $y = x^n$
-%\State Balance samples
-%\For{$0 \leq task\_epoch < epochs$}
-%\For{$batch \in train\_set$}
-%\State Compute loss on $batch$
-%\State Update network weights
-%\EndFor
-%\EndFor
-%\State Update evaluation metrics
-%\end{algorithmic}
-%\end{algorithm}
-
-
-
-
-%The training loop is described by algorithm \ref{cem:alg:continual}.
-%for task\_id in range(tasks):
-%  balance\_task(task\_id)
-%  for task\_epoch in range(epochs):
-%    for each batch:
-%      compute loss on batch: cls + triplet (batch)
-%      compute loss on buffer: replay + triplet past tasks (buffer only) + triplet current task (buffer + batch)
-%      update buffer (class balanced reservoir sampling)
-%    update concepts in buffer
-%  update evaluation metrics
-%\begin{algorithm}
-%\caption{TODO: CONTINUAL TRAINING LOOP}\label{cem:alg:continual}
-%\begin{algorithmic}
-%\Require $n \geq 0$
-%\Ensure $y = x^n$
-%\For{$0 \leq task\_id < task\_num$}
-%\State Balance samples in task $task\_id$
-%\For{$0 \leq task\_epoch < epochs$}
-%\For{$batch \in train\_set[task\_id]$}
-%\State Compute loss on $batch$
-%\State Compute loss on buffer
-%\State Update network weights
-%\State Insert samples in buffer
-%\EndFor
-%\State Update concept representations in buffer
-%\EndFor
-%\State Update evaluation metrics
-%\EndFor
-%\end{algorithmic}
-%\end{algorithm}
-
-%\paragraph{Validation strategy} 
-%\textcolor{red}{Se spostiamo i dataset in Experiments, anche questa frase va spostata lì}
-
-%\subsection{Metrics}
-
-% \paragraph{Continual learning} avg accuracy + forgetting + forward transfer + backward transfer
-
-%\paragraph{Unsupervised concept learning} Matthew's phi coefficient + Modified alignment scores \textcolor{red}{Il fatto che CAS sia inadeguata va qui o nella discussion?}
-
-\paragraph{Task-related Metrics.} Similar to Section~\ref{sec:kandy:neur-exp}, we consider \textsc{\small Average Accuracy} and \textsc{\small Average Forgetting} as main metrics.\footnote{We also measured forward/backward transfer, that we found to be not significantly pronounced, thus we avoid reporting them.} Additionally, 
-%
-% The main metric we consider is the {\small\sc Average Accuracy} in $[0,1]$, which is the average of the task-related accuracies $\{\mathrm{acc}_j^{z},\ j=1,\ldots,|\mathcal{T}|\}$. In particular, $\mathrm{acc}_{j}^{z}$ is the micro-accuracy on the $j$-th  binary classification task, computed with the network that was trained up to task $z$.  The {\small\sc Average Accuracy} is then evaluated at time $z=\mathcal{T}$ (i.e., after having processed the last streamed task) when comparing continual settings with non-continual ones. Moreover, we analyze results at different time instants, considering not only accuracies but also other well-established metrics in the continual learning literature~\cite{mai2022online}. The {\small\sc Average Forgetting} at time $z$, for each task $j$, compares $\mathrm{acc}_{j}^{z}$ with the best accuracy obtained in all the previous time instants (i.e., a positive forgetting means the model is performing worse than before).\footnote{We also measured forward/backward transfer, that we found to be not significantly pronounced, thus we avoid reporting them.} 
-%I
-in order to evaluate the way tuples of concepts are aligned to tasks, we considered what we refer to as {\sc\small Task Alignment Score} ({\small\sc TAS}). This score is a direct transposition of the alignment measure considered when evaluating Concept Embedding Models~\cite{espinosa2022concept}, which is named {\sc\small Concept Alignment Score} ({\small\sc CAS}) in their work. The original implementation assumed supervised concepts, and the goal was to measure the alignment of each concept embedding in relation to the supervised concept it represented. In the context of this chapter, however, we are interested instead in measuring the alignment of concept activation scores $\vc$ and each task in the curriculum.\footnote{We reused the code of~\cite{espinosa2022concept}, using the concept logit vector prior the sigmoid functions that yields $\vc$.}
-%Similarly to the case of {\small\sc Average Accuracy}, we computed {\small\sc TAS} at the end of each learning or during the task streaming, following the same aggregation criteria.
-%{\color{red}TODO: inserire equazioni per TAS in appendice.}
+\paragraph{Task-related Metrics.} Similar to Section~\ref{sec:kandy:neur-exp}, we consider \textsc{\small Average Accuracy} and \textsc{\small Average Forgetting} as main metrics.\footnote{We also measured forward/backward transfer, that we found to be not significantly pronounced, thus we avoid reporting them.} Additionally, in order to evaluate the way tuples of concepts are aligned to tasks, we considered what we refer to as {\sc\small Task Alignment Score} ({\small\sc TAS}). This score is a direct transposition of the alignment measure considered when evaluating Concept Embedding Models~\cite{espinosa2022concept}, which is named {\sc\small Concept Alignment Score} ({\small\sc CAS}) in their work. The original implementation assumed supervised concepts, and the goal was to measure the alignment of each concept embedding in relation to the supervised concept it represented. In the context of this chapter, however, we are interested instead in measuring the alignment of concept activation scores $\vc$ and each task in the curriculum.\footnote{We reused the code of~\cite{espinosa2022concept}, using the concept logit vector prior the sigmoid functions that yields $\vc$.}
 
 \paragraph{Concept-only Metrics.} When restricting the evaluation to the concept bottleneck only, our goal is to evaluate how similar are the discovered concepts to the ground truth concepts annotations. We considered four different measures. The first one is another instance of the already introduced {\small\sc Concept Alignment Score}, in this case named {\sc\small Ground Concept Alignment Score} ({\small\sc GCAS}), which measures the averaged (over ground truth concepts) alignment of concept activation scores $\vc$ and each (expected) ground truth concept. 
-% on the concept bottleneck layer. %, as described in~\citet{espinosa2022concept}, but with two main differences.
-%The original implementation assumed supervised concept learning, thus a 1-to-1 alignment is assumed between ground truth ($T$) and predicted concepts ($P$), and comparisons are made only between $T_i$ and $P_i$, after a suitable permutation of $P$. As we deal with an unsupervised concept learning scenario, we lift the 1-to-1 alignment requirement by computing the 1-to-many mapping between each $T_i$ and $P$.
 %
-%The second difference deals with which predicted concept vector is used in computations. In the original proposal, authors use concept embeddings, but we argue that this choice introduces noise in the interpretation of results, especially in unsupervised settings, for example, two highly-correlated concepts likely encode the same ground truth, but if they are mapped to distinct embedding spaces, their alignment score may be inflated, as their expressive power is effectively doubled with respect to a single concept active for the same ground truth.
-%In order to mitigate this issue, we compute CAS and TAS by using the concept logit vector prior to sigmoid activation and linear embedding mapping.
-%\textcolor{red}{TODO: equazioni}
-%Both {\sc\small Concept Alignment Score} and {\sc\small Task Alignment Score} are extended to the continual task incremental setting, by recomputing them at the end of each task. We report these scores computed on the test set samples accumulated from every task, from the beginning up to the lastly trained one.
 The second and third metrics are based on the correlation matrices between ground truth concepts and discovered concepts, and vice-versa, respectively. In particular, we computed the {\sc\small Matthews Correlation Coefficient} ({\sc\small MCC})~\cite{matthews1975comparison} for each entry of the two matrices. Differently from {\small\sc GCAS}, here we focus on binarized concepts $\hat{\vc}$. We aggregate the results on each matrix by means of the  {\sc\small Jensen-Shannon divergence}~\cite{menendez1997jensen} ({\small\sc JSD}), either normalizing rows (i.e., with respect to true concepts, {\small\sc JSD-T}) or column (i.e., with respect to predicted concepts, {\small\sc JSD-P}) to probability distributions. %considering each normalized row as a probability distribution describing how likely it is for a predicted concept to be mapped to each of the ground truth concepts ({\small\sc JSD-T}), or considering each normalized column as a probability distribution describing how likely it is for a ground truth concept to be represented by each of the predicted concepts ({\small\sc JSD-P}). 
 In the former case, intuitively, we penalize predicted concepts which allocate probability to more than one true concept, while in the latter we penalize redundant representations of true concepts.
 The last metric we propose focuses on comparing the correlation between predicted concepts and themselves. The entries of the {\sc\small MCC}-based correlation matrix are aggregated into the so-called {\small\sc Diagonalization Score} ({\small\sc DIAGS}), that measures how close is the correlation matrix to a diagonal matrix, where concepts are encoding independent aspects (the larger the better).
 Appendix~\ref{app:kandycemmetrics} contains an extended definition of the proposed metrics.
-%\textcolor{red}{TODO: Matthews correlation, sistemare notazione}
-%To avoid the shortcomings of CAS in the unsupervised setting, we computed correlation matrices between concepts, by means of {\sc\small Matthews correlation coefficient} (MCC)~\cite{matthews1975comparison}. Given the binarized predicted concept vector $\vp^{\geq 0.5}$, let $n$ be the number of samples in the test set, $n^{11}_{i,j}$ the number of samples in which $\vp^{\geq 0.5}_i = 1$ and $\vt_j = 1$, $n^{1\bullet}_{i}$ the number of samples in which $\vp^{\geq 0.5}_i = 1$ and $n^{\bullet1}_{j}$ the number of samples in which $\vt_j = 1$, then the MCC is computed as:
-%$$\mathbf{\Phi}^{PT}_{i,j} = \frac{n \cdot n^{11}_{i,j} - n^{1\bullet}_i \cdot n^{\bullet1}_j}{\sqrt{n^{1\bullet}_i \cdot n^{\bullet1}_j \cdot (n - n^{1\bullet}_i) \cdot (n - n^{\bullet1}_j)}}.$$
-%In a similar fashion, we compute the autocorrelation matrix $\mathbf{\Phi}^{PP}_{i,j}$ between predicted concepts and themselves.
-%Like CAS and TAS, we extend MCC to the continual learning case, by computing task-incremental versions.
-%%
-%\textcolor{red}{TODO: Diagonalization score + JSD}
-%We propose two additional metrics, to aggregate MCC matrices into scalar values.
-%The {\sc\small Diagonalization Score} condenses the $PP_{i,j}$ matrix into a $[0, 1]$ value, with 1 corresponding to a diagonal matrix:
-%$$
-%\mathrm{diagonalization\_score} = 1 - \frac{\sum\limits_{i = 0}^{n}\sum\limits_{j = 0}^{n} (|\mathbf{\Phi}^{PP}_{i,j}| \cdot (\mI\mI^T_{i,j} - \mI_{i,j}))}{n^2}.
-%$$
-%Due to the lack of a 1-to-1 correspondence between ground truth and predicted concepts, condensation of the $PT$ matrix is more involved. For its computation we rely on the {\sc\small Jensen-Shannon divergence}~\cite{menendez1997jensen} (JSD), by considering each normalized row $\tilde{\mathbf{\Phi}}^{row}_{i,:}$ a probability distribution describing how likely it is for predicted concept $\vp_i$ to be mapped on each of the $m$ true concepts $\vt$, and each normalized column $\tilde{\mathbf{\Phi}}^{col}_{:, j}$ a probability distribution describing how likely it is for true concept $\vt_j$ to be represented by each of the $n$ predicted concepts $\vp$.
-%In the first case, intuitively, we penalize predicted concepts which allocate probability to more than one true concept, while in the latter we penalize redundant representations of true concepts.
-%In practice, we first split positive and negative correlations, to address the case in which a predicted concept was learned as the negation of a true one, and then compute the JSD between each row (respectively column) and the one-hot encoding of its argmax. We finally average the scores to get two scalars (one for positive and the other for negative correlations) which are then averaged again into a single value.
-%\begin{align*}
-%\tilde{\mathbf{\Phi}}^{row}_{i,j} &= \frac{\mathbf{\Phi}^{PT}_{i,j}}{\sum\limits_{k = 0}^m \mathbf{\Phi}^{PT}_{i,k}}\\
-%\tilde{\mathbf{\Phi}}^{col}_{i, j} &= \frac{\mathbf{\Phi}^{PT}_{i, j}}{\sum\limits_{k = 0}^n \mathbf{\Phi}^{PT}_{k,j}}\\
-%    \Phi^*_{i\bullet} &= onehot(argmax(\Phi^{PT}_{i,:}))\\
-%    \Phi^*_{\bullet j} &= onehot(argmax(\Phi^{PT}_{:, j}))\\
-%JSD^\downarrow_{pos} &= \frac{\sum\limits_{j = 0}^m D_\mathrm{JS}(\tilde{\Phi}^{row}_{:, j} \parallel \Phi^*_{:, j})}{m}\\
-%JSD^\rightarrow_{pos} &= \frac{\sum\limits_{i = 0}^n D_\mathrm{JS}%(\tilde{\Phi}^{col}_{i,:} \parallel \Phi^*_{i,:})}{n}\\
-%JSD^\downarrow &= \frac{JSD^\downarrow_{pos} + JSD^\downarrow_{neg}}{2}\\
-%JSD^\rightarrow &= \frac{JSD^\rightarrow_{pos} + JSD^\rightarrow_{neg}}{2}
-%\end{align*}
-%\textcolor{red}{CONTROLLARE}
-%See Appendix~\ref{cem:appendix:metrics} for an extended description of the introduced metrics. % {\color{red}TODO: ricontrollare appendice.} 
-
-
-%Matthew's phi coefficient + Modified alignment scores \textcolor{red}{Il fatto che CAS sia inadeguata va qui o nella discussion?}
-
 
 
 \section{Results}
-%\TODO{AAA}
-
 
 \paragraph{Tasks vs. Concepts.} Table~\ref{cem:tab:main} reports our main experimental results. We compare {\small\sc Average Accuracy} and {\small\sc TAS} in the Task-incremental and Joint learning cases. 
 Overall differences in {\small\sc Average Accuracy} are not significant. Accuracy is slightly larger in the Task-incremental setting for \textsc{KANDY-Concepts-1}, while it is slightly larger in the Joint setting for \textsc{KANDY-Concepts-2}. 
@@ -424,79 +265,7 @@ In the Task-incremental setting, \textsc{KANDY-Concepts-2} yields more uncorrela
 %
 Overall, we argue that this difference between the two datasets is also likely due to the larger number of tasks and, more importantly, of ground truth concepts in \textsc{KANDY-Concepts-2}, where Joint training has to face the challenge of simultaneously discovering several concepts, which are instead disclosed gradually in the Task-incremental setting. %In general, the relationships between concept discovery and dataset characteristics seem to play an interesting role which will be subject to further investigation.%be very interesting and will certainly be the subject of further investigations.
 
-\paragraph{Correlation Matrices.} We investigate more detailed results characterizing concept-level metrics, reporting a visual example about the Matthews Correlation Coefficient, in Figure~\ref{cem:fig:mcc} (\textsc{KANDY-Concepts-2}, \textsc{ViT-16}). In Figure~\ref{cem:fig:mcc} (a, b), we show the correlation among the automatically discovered concepts. In (a) the triplet loss is not used, while in (b) it is active. In the latter case, we clearly see the filled diagonal, while in the former there is an unused concept, suggesting that the triplet loss favors the usage of the available resources. However, when the triplet loss is used, we also see some more positive correlations (more reddish, orange areas), suggesting that there is indeed a bit more overlap among concepts. In Figure~\ref{cem:fig:mcc} (c, d) we report the correlation matrix between the learned concepts (rows) and the ground truth ones (columns), without (c) and with triplet loss (d). In the latter case it is easy to see that there are some dark horizontal stripes that are missing in (c). This suggests that some learned concepts (the ones of the darker rows) are either not used much or that they encode properties far from the ground truth. This behavior is expected, since there is nothing preventing the network from encoding additional information with respect to our expectations. In the Joint learning case, due to the immediate availability of the data from all tasks, the ground truth concepts are more spread across the learned ones. %For all these metrics, we remark that there is actually no guarantee that the learned concepts will match the annotated ground truth concepts, since the latter are \textit{never} using during training, and the neural models could just learn a set of diverse representations that encode concepts not aligned with the ground truth.
-
-%\textcolor{red}{TODO 1: continual tas più alta di joint. Ablation: cnn unaffected, resnet forte calo, vit: forte calo in kandy 2, debole calo in kandy 1}
-
-%\textcolor{red}{TODO 2: con triplet accesa accuracy continual più alta del joint. Ablation: con triplet spenta l'accuracy sale (con un delta massimo nel caso joint su kandy 2, mentre kandy 1 è praticamente unaffected)}
-
-%\textcolor{red}{TODO 3: (heatmap pp) senza triplet non tutti i concetti vengono sfruttati, con triplet vengono aggiunte correlazioni positive (mentre le correlazioni negative, aree nere, sembrano abbastanza simili)}
-
-%\textcolor{red}{TODO 4: (heatmap pt) ???}
-
-%\textcolor{red}{TODO 5: le differenze tra kandy 1 e kandy 2 ci dicono che è importante anche la scelta del dataset?}
-
-%\textcolor{red}{TODO 6: Resnet con triplet spenta ha diag score = 1 perché la matrice di correlazione è di tutti zeri, nonostante abbia avg accuracy buona -> caso limite?}
-
-%\textcolor{red}{TODO 7: Andamenti cnn vs pre-trained?}
-
-%\textcolor{red}{TODO 8: GCAS e JSD-T meglio nel caso joint, mentre JSD-P sempre meglio nel caso continual. KANDY 1 nel caso joint apprende concetti più scorrelati tra di loro (diag alta) e più correlati alla ground truth (gcas alta), parrebbe quindi delegare la codifica del task agli embedding del CEM e al classificatore, mentre il caso continual (TAS più alta) pare codifichi "meglio" nel layer dei concetti. In kandy 2 invece si ha una maggiore tendenza a decorrelare i concetti, soprattutto nel caso continual, probabilmente per il fatto che ci sono più task "indipendenti tra di loro". Altra ipotesi è che il numero più elevato di task in kandy 2 aumenta la difficoltà di convergenza del caso joint, dovendo scoprire più concetti indipendenti contemporaneamente (cosa che nel caso continual è assente perché i concetti sono svelati progressivamente in entrambi i dataset). Future works: il numero e la struttura dei task nel curriculum possono influenzare questo comportamento, che in esperimenti continual a pochi task non è rilevabile.}
-
-%\textcolor{red}{TODO 9: DIAGS dipende dal dataset. In kandy 1 meglio joint, in kandy 2 meglio continual}
-
-
-
-
-
-%\subsection{Ablation study}
-
-%\begin{table}
-%\centering
-%\begin{tabular}{ccccc}
-%\toprule
-%\multicolumn{5}{c}{KANDY 1}\\
-%Model & Configuration & Avg Acc. $\uparrow$ & Avg Forg. $\downarrow$ & TAS $\uparrow$ \\
-%\midrule
-%\multicolumn{4}{c}{CNN}\\
-%\multirow{2}{*}{CNN}&
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.65 & 0.17 & 0.79 \\
-%&$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.62 & 0.00 & 0.65 \\
-%\hdashline
-%\multicolumn{4}{c}{ResNet-50}\\
-%\multirow{2}{*}{ResNet-50}&
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & \textbf{0.73} & \textbf{0.05} & 0.76 \\
-%&$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.70 & 0.00 & 0.68 \\
-%\hdashline
-%\multirow{2}{*}{ViT}&
-%\multicolumn{4}{c}{ViT}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.69 & 0.07 & \textbf{0.81} \\
-%&$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.68 & 0.00 & 0.60 \\
-%\midrule
-%\multicolumn{5}{c}{KANDY 2}\\
-%Model & Configuration & Avg Acc. $\uparrow$ & Avg Forg. $\downarrow$ & TAS $\uparrow$ \\
-%\midrule
-%\multicolumn{4}{c}{CNN}\\
-%\multirow{2}{*}{CNN}&
-%$\lambda_t = 10.0, \lambda_r = 10.0, H_m = 1$ (continual) & 0.69 & 0.20 & \textbf{0.82} \\
-%&$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.70 & 0.00 & 0.50 \\
-%\hdashline
-%\multicolumn{4}{c}{ResNet-50}\\
-%\multirow{2}{*}{ResNet-50}&
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.74 & 0.11 & 0.78 \\
-%&$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & \textbf{0.79} & 0.00 & 0.57 \\
-%\hdashline
-%\multicolumn{4}{c}{ViT}\\
-%\multirow{2}{*}{ViT}&
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.75 & \textbf{0.09} & \textbf{0.82} \\
-%&$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 4$ (joint) & 0.76 & 0.00 & 0.63 \\
-%\bottomrule
-%\end{tabular}
-%\caption{TODO: CONCETTI VS TASK (A)}
-%\end{table}
-
-
-
-
+\paragraph{Correlation Matrices.} We investigate more detailed results characterizing concept-level metrics, reporting a visual example about the Matthews Correlation Coefficient, in Figure~\ref{cem:fig:mcc} (\textsc{KANDY-Concepts-2}, \textsc{ViT-16}). In Figure~\ref{cem:fig:mcc} (a, b), we show the correlation among the automatically discovered concepts. In (a) the triplet loss is not used, while in (b) it is active. In the latter case, we clearly see the filled diagonal, while in the former there is an unused concept, suggesting that the triplet loss favors the usage of the available resources. However, when the triplet loss is used, we also see some more positive correlations (more reddish, orange areas), suggesting that there is indeed a bit more overlap among concepts. In Figure~\ref{cem:fig:mcc} (c, d) we report the correlation matrix between the learned concepts (rows) and the ground truth ones (columns), without (c) and with triplet loss (d). In the latter case it is easy to see that there are some dark horizontal stripes that are missing in (c). This suggests that some learned concepts (the ones of the darker rows) are either not used much or that they encode properties far from the ground truth. This behavior is expected, since there is nothing preventing the network from encoding additional information with respect to our expectations. In the Joint learning case, due to the immediate availability of the data from all tasks, the ground truth concepts are more spread across the learned ones.
 
 \begin{table}
 \centering
@@ -529,134 +298,6 @@ Task-incremental & 0.75 $$ {\tiny ($\pm 0.05$)} & 0.60 $$ {\tiny ($\pm 0.00$)} &
 
 \label{cem:tab:other-scores}
 \end{table}
-
-%\begin{table}
-%\centering
-%\begin{tabular}{ccccc}
-%\toprule
-%\multicolumn{5}{c}{KANDY 1}\\
-%Model & CAS $\uparrow$ & Diag. Score $\uparrow$ & JSD (P vs T) $\downarrow$ & JSD (T vs P) $\downarrow$ \\
-%\midrule
-%\multicolumn{5}{c}{CNN}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.58 & 0.63 & 13.81 & 2.90 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.66 & \textbf{0.96} & \textbf{6.53} & \textbf{1.88} \\
-%\hdashline
-%\multicolumn{5}{c}{ResNet-50}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.62 & 0.73 & 14.05 & 2.97 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & \textbf{0.70} & 0.89 & 10.73 & \textbf{1.88} \\
-%\hdashline
-%\multicolumn{5}{c}{ViT}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.60 & 0.75 & 13.54 & 3.06 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & \textbf{0.70} & 0.85 & 12.20 & 2.17 \\
-%\midrule
-%\multicolumn{5}{c}{KANDY 2}\\
-%Model & CAS $\uparrow$ & Diag. Score $\uparrow$ & JSD (P vs T) $\downarrow$ & JSD (T vs P) $\downarrow$ \\
-%\midrule
-%\multicolumn{5}{c}{CNN}\\
-%$\lambda_t = 10.0, \lambda_r = 10.0, H_m = 1$ (continual) & 0.60 & \textbf{0.82} & 11.06 & \textbf{4.53} \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & \textbf{0.65} & 0.52 & 10.02 & 4.91 \\
-%\hdashline
-%\multicolumn{5}{c}{ResNet-50}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.58 & 0.71 & 10.75 & 4.58 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.62 & 0.58 & 10.82 & 4.67 \\
-%\hdashline
-%\multicolumn{5}{c}{ViT}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.58 & 0.77 & 11.05 & 4.58 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 4$ (joint) & 0.56 & 0.55 & \textbf{9.79} & 4.73 \\
-%\bottomrule
-%\end{tabular}
-%\caption{TODO: CONCETTI VS CONCETTI ATTESI (B)}
-%\end{table}
-
-\iffalse
-\begin{table}
-\centering
-%\begin{tabular}{cccc}
-%\toprule
-%\multicolumn{4}{c}{KANDY 1}\\
-%Model & Avg Acc. $\uparrow$ & Avg Forgetting $\downarrow$ & TAS $\uparrow$ \\
-%\midrule
-%\multicolumn{4}{c}{CNN}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.65 & 0.17 & 0.79 \\
-%$\lambda_t = 0.0, \lambda_r = 1.0, H_m = 0$ (continual) & 0.69 & 0.15 & 0.79 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.62 & 0.00 & 0.65 \\
-%$\lambda_t = 0.0, \lambda_r = 0.0, H_m = 0$ (joint) & 0.71 & 0.00 & 0.67 \\
-%\hdashline
-%\multicolumn{4}{c}{ResNet-50}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.73 & \textbf{0.05} & 0.76 \\
-%$\lambda_t = 0.0, \lambda_r = 10.0, H_m = 0$ (continual) & \textbf{0.75} & 0.07 & 0.69 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.70 & 0.00 & 0.68 \\
-%$\lambda_t = 0.0, \lambda_r = 0.0, H_m = 0$ (joint) & 0.73 & 0.00 & 0.57 \\
-%\hdashline
-%\multicolumn{4}{c}{ViT}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.69 & 0.07 & \textbf{0.81} \\
-%$\lambda_t = 0.0, \lambda_r = 1.0, H_m = 0$ (continual) & 0.67 & 0.11 & 0.78 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.68 & 0.00 & 0.60 \\
-%$\lambda_t = 0.0, \lambda_r = 0.0, H_m = 0$ (joint) & 0.68 & 0.00 & 0.58 \\
-%\midrule
-%\multicolumn{4}{c}{KANDY 2}\\
-%Model & Avg Acc. $\uparrow$ & Avg Forgetting $\downarrow$ & TAS $\uparrow$ \\
-%\midrule
-%\multicolumn{4}{c}{CNN}\\
-%$\lambda_t = 10.0, \lambda_r = 10.0, H_m = 1$ (continual) & 0.69 & 0.20 & \textbf{0.82} \\
-%$\lambda_t = 0.0, \lambda_r = 1.0, H_m = 0$ (continual) & 0.75 & 0.15 & 0.81 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.70 & 0.00 & 0.50 \\
-%$\lambda_t = 0.0, \lambda_r = 0.0, H_m = 0$ (joint) & 0.81 & 0.00 & 0.50 \\
-%\hdashline
-%\multicolumn{4}{c}{ResNet-50}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.74 & 0.11 & 0.78 \\
-%$\lambda_t = 0.0, \lambda_r = 1.0, H_m = 0$ (continual) & 0.78 & \textbf{0.07} & 0.71 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 1$ (joint) & 0.79 & 0.00 & 0.57 \\
-%$\lambda_t = 0.0, \lambda_r = 0.0, H_m = 0$ (joint) & \textbf{0.82} & 0.00 & 0.50 \\
-%\hdashline
-%\multicolumn{4}{c}{ViT}\\
-%$\lambda_t = 1.0, \lambda_r = 1.0, H_m = 1$ (continual) & 0.75 & 0.09 & \textbf{0.82} \\
-%$\lambda_t = 0.0, \lambda_r = 1.0, H_m = 0$ (continual) & 0.74 & 0.10 & 0.73 \\
-%$\lambda_t = 1.0, \lambda_r = 0.0, H_m = 4$ (joint) & 0.76 & 0.00 & 0.63 \\
-%$\lambda_t = 0.0, \lambda_r = 0.0, H_m = 0$ (joint) & 0.81 & 0.00 & 0.67 \\
-%\bottomrule
-%\end{tabular}
-\resizebox{0.5\textwidth}{!}{\begin{tabular}{cccccc}
-\toprule
-\multirow{2}{*}{Model} & \multirow{2}{*}{Setting} & \multicolumn{2}{c}{{\small\sc KANDY-Concepts-1}} & \multicolumn{2}{c}{{\small\sc KANDY-Concepts-2}} \\
-\cmidrule{3-6}
-%\rowcolor{Gray}
-& & {\small\sc Avg Acc} $\uparrow$ & {\small\sc TAS} $\uparrow$ & {\small\sc Avg Acc} $\uparrow$ & {\small\sc TAS} $\uparrow$ \\
-\midrule
-%\multicolumn{4}{c}{CNN}\\
-%\multirow{2}{*}{CNN}& Continual (triplet) & \cellcolor{Gray}0.65 & \cellcolor{Gray}{\bf 0.79} & \cellcolor{Gray}0.69 & \cellcolor{Gray}{\bf 0.82} \\
-\multirow{2}{*}{CNN}& Task-incremental (triplet) & 0.65 & {\bf 0.79} & 0.69 & {\bf 0.82} \\
-& Task-incremental (simple) & 0.69 & {\bf 0.79} & 0.75 & 0.81\\
-& Joint (triplet) & 0.62 & 0.65 & 0.70 & 0.50\\
-& Joint (simple) & {\bf 0.71} & 0.67 & {\bf 0.81} & 0.50 \vspace{-1mm}\\
-\multicolumn{6}{@{}c@{}}{\vspace{-1mm}\makebox[0.6\textwidth]{\dashrule}}\\
-%\multicolumn{4}{c}{ResNet-50}\\ 
-\multirow{2}{*}{ResNet-50}&
-%Continual (triplet) & \cellcolor{Gray}0.73 & \cellcolor{Gray}{\bf 0.76} & \cellcolor{Gray}0.74 & \cellcolor{Gray}{\bf 0.78} \\
-Task-incremental (triplet) & 0.73 & {\bf 0.76} & 0.74 & {\bf 0.78} \\
-& Task-incremental (simple) & {\bf 0.75} & 0.69 & 0.78 & 0.71\\
-& Joint (triplet) & 0.70 & 0.68 & 0.79 & 0.57\\
-& Joint (simple) & 0.73 & 0.57 & {\bf 0.82} & 0.50 \vspace{-1mm}\\
-\multicolumn{6}{@{}c@{}}{\vspace{-1mm}\makebox[0.6\textwidth]{\dashrule}}\\
-\multirow{2}{*}{ViT-16}&
-%\multicolumn{4}{c}{ViT}\\
-%Continual (triplet) & \cellcolor{Gray}{\bf 0.69} & \cellcolor{Gray}{\bf 0.81} & \cellcolor{Gray}0.75 & \cellcolor{Gray} {\bf 0.82} \\
-Task-incremental (triplet) & {\bf 0.69} & {\bf 0.81} & 0.75 & {\bf 0.82} \\
-& Task-incremental (simple) & 0.67 & 0.78 & 0.74 & 0.73\\
-& Joint (triplet) & 0.68 & 0.60 & 0.76 & 0.63\\
-& Joint (simple) & 0.68 & 0.58 & {\bf 0.81} & 0.67 \vspace{-1mm}\\
-\bottomrule
-\end{tabular}}
-\label{cem:tab:ablation}
-\caption{TODO: ABLATION (C)}
-\end{table}
-\fi
-
-
-
-
-
-
 
 \begin{figure}
 \centering

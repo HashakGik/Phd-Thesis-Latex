@@ -35,7 +35,7 @@ For instance, let us consider the following example:
  &\texttt{same}(A, B, C): \texttt{all\_equal}([A, B, C]).
 \end{align*}
 We may observe the following perceptual stimuli $\gX^{(t)} = \langle img_A, img_B, img_C\rangle$ (mapped to their corresponding symbolic labels $\gY^{(t)} = \langle A, B, C\rangle$) at four different time-steps $\gX^{(0)} = \langle\mathimg{mnist3}, \mathimg{mnist5},\mathimg{mnist8}\rangle, \gX^{(1)} = \langle\mathimg{mnist2}, \mathimg{mnist5},\mathimg{mnist3}\rangle, \gX^{(2)} = \langle\mathimg{mnist4}, \mathimg{mnist4},\mathimg{mnist4}\rangle, \gX^{(3)} = \langle\mathimg{mnist0}, \mathimg{mnist0},\mathimg{mnist0}\rangle$. For each of them, we can check which relations in $\gC$ hold: $[\{\texttt{sum}: \top, \texttt{same}: \bot\}, \{\texttt{sum}: \bot, \texttt{same}: \bot\}, \{\texttt{sum}: \bot, \texttt{same}: \top\}, \{\texttt{sum}: \top, \texttt{same}: \top\}]$. 
-%%%%
+%
 Let $\gF$ be a \textit{temporal specification}, defined as an \LTLf formula over the set of relations in $\gC$,  grounded with values in $\gY$. For example, $\gF: \ltlglobally(\texttt{sum}(A,B,C) \leftrightarrow \ltlnext \texttt{same}(A,B,C))$.\footnote{We will omit terms from predicates appearing in $\gF$ (e.g., $\ltlglobally(\texttt{sum} \leftrightarrow \ltlnext \texttt{same})$) when the grounded variables are clear from the context.} This formula models the fact that it will always be true that $\texttt{sum/3}$ is satisfied in a given time-step if and only if the next one satisfies $\texttt{same/3}$. 
 The tuple $\langle \gX, \gY, \gC, \gF \rangle$ allows the definition of arbitrary finite-length linear-time first-order reasoning settings.
 

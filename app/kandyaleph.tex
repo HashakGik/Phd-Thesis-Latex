@@ -1,12 +1,10 @@
 \chapter{Knowledge Bases for \textsc{KANDY-Induction} Experiments}\label{app:kandyaleph}
 
 \section{Natural Encoding - Medium size}
-%\subsection{Background knowledge for ground truth/rejection rules and ILP experiments}
 The following is the background knowledge used for rejection sampling during curricula generation. It allows to compactly define every task with at most 6 predicates.
 The natural mid-size ({\small\textsc{Nat-Mid}}) background knowledge used in ILP experiments is built from this one, by removing domain-definition predicates (e.g., \texttt{color(red)}) in order to reduce the search space.
 $\ $\\
 
-%\begin{lstlisting}
 \begin{minted}{prolog}
 color(red).
 color(green).

@@ -148,11 +148,6 @@ minimum height=1em, minimum width=6em]
   \color{#1}\rule[\dimexpr.5ex-.2pt]{4pt}{.4pt}\xleaders\hbox{\rule{4pt}{0pt}\rule[\dimexpr.5ex-.2pt]{4pt}{.4pt}}\hfill\kern0pt%
 }
 
-\newcommand{\OLD}[1]{\textcolor{red}{\st{#1}}}
-\newcommand{\NEW}[1]{\textcolor{blue}{#1}}
-\newcommand{\QUEST}[1]{\textcolor{magenta}{QUESTION: #1}}
-\newcommand{\TODO}[1]{\textcolor{orange}{TODO: #1}}
-
 %\def\ltlweaknext{\mathcal{W}\xspace}
 \def\ltlweaknext{\raisebox{-0.55ex}{\mbox{\FilledCircle}}\xspace}
 \def\ltluntil{\,\mathsf{U}\,\xspace}
@@ -219,7 +214,7 @@ minimum height=1em, minimum width=6em]
 %\setboolean{hostUNIPI}{true}
 
 % uncomment next line if host institution is UNIMORE (it does not allow for logo in the front page)
-%\setboolean{hostUNIMORE}{true}
+\setboolean{hostUNIMORE}{true}
 
 \ifthenelse{\boolean{hostUNIPI} \OR \boolean{hostUNIMORE}}{
     % host institution is UNIPI or UNIMORE
@@ -298,8 +293,6 @@ minimum height=1em, minimum width=6em]
     
     {\normalfont\bfseries\boldmath\LARGE
     \begin{center}
-        %This is the Title of Thesis:\\ 
-        %This is the Continuation of the Title
 		Learning and Reasoning Over Time:\\
         Challenges, Evaluation, and Opportunities
     \end{center}
@@ -334,13 +327,6 @@ minimum height=1em, minimum width=6em]
 
 \thispagestyle{empty}
 \phantomsection 
-
-%\vspace*{3cm}
-%\medskip
-
-%\begin{flushright}
-%    \emph{This page intentionally left blank}.
-%\end{flushright}
 
 \setcounter{page}{-1}
 \chapter{Summary}
@@ -607,9 +593,7 @@ The following paper is currently under review at the time of writing:
 \label{chap:concl}
 \input{conclusions.tex}
 
-% remove if no figures
 \listoffigures
-% remove if no tables
 \listoftables
 
 % Bibliography

@@ -37,7 +37,6 @@ For Average Accuracy and Forgetting, we also focus their evaluation on the targe
 We perform model selection by measuring Average Accuracy at the end of training on the validation set.
 
 \section{Results}
-%\TODO{AAAA}
 \begin{table}
 	\centering
 	\resizebox{\textwidth}{!}{
@@ -47,14 +46,12 @@ We perform model selection by measuring Average Accuracy at the end of training 
 			& & & & & & & & & & \\
 			& & & & & & & & & & \\
 			\midrule
-			%Task 1 (MNIST) & Predicates & Naive & No buffer & No distillation & Flat & $0.88 $ {\tiny ($\pm 0.01$)} & $0.11 $ {\tiny ($\pm 0.00$)} & $0.53 $ {\tiny ($\pm 0.02$)} & $0.00 $ {\tiny ($\pm 0.00$)} & $1.00 $ {\tiny ($\pm 0.00$)}\\
 			\multirow{14}{*}{\shortstack[c]{Task 1\\(MNIST)}} & \multirow{5}{*}{Predicates} & Replay & Reservoir (CCE) & No distillation & Flat & $0.95 $ {\tiny ($\pm 0.02$)} & $\textbf{0.03} $ {\tiny ($\pm 0.02$)} & $\textbf{0.70} $ {\tiny ($\pm 0.03$)} & $0.71 $ {\tiny ($\pm 0.22$)} & $0.26 $ {\tiny ($\pm 0.22$)}\\
 			&  & Modular & No buffer & No distillation & Modular & $0.88 $ {\tiny ($\pm 0.01$)} & $0.11 $ {\tiny ($\pm 0.00$)} & $0.51 $ {\tiny ($\pm 0.02$)} & $0.00 $ {\tiny ($\pm 0.00$)} & $1.00 $ {\tiny ($\pm 0.00$)}\\
 			&  & Replay + Distillation & Reservoir (CCE) & Teacher-distillation & Flat & $0.95 $ {\tiny ($\pm 0.02$)} & $\textbf{0.03} $ {\tiny ($\pm 0.02$)} & $0.68 $ {\tiny ($\pm 0.04$)} & $\textbf{0.78} $ {\tiny ($\pm 0.23$)} & $\textbf{0.20} $ {\tiny ($\pm 0.22$)}\\
 			&  & Replay + Modular & Reservoir (CCE) & No distillation & Modular & $\textbf{0.96} $ {\tiny ($\pm 0.02$)} & $\textbf{0.03} $ {\tiny ($\pm 0.03$)} & $\textbf{0.70} $ {\tiny ($\pm 0.03$)} & $0.77 $ {\tiny ($\pm 0.23$)} & $0.21 $ {\tiny ($\pm 0.25$)}\\
 			&  & All & Reservoir (CCE) & Teacher-distillation & Modular & $0.95 $ {\tiny ($\pm 0.03$)} & $\textbf{0.03} $ {\tiny ($\pm 0.03$)} & $0.67 $ {\tiny ($\pm 0.03$)} & $0.76 $ {\tiny ($\pm 0.26$)} & $0.24 $ {\tiny ($\pm 0.26$)}\\
 			\cdashline{2-11}
-			%Task 1 (MNIST) & States & Naive & No buffer & No distillation & Flat & $0.88 $ {\tiny ($\pm 0.00$)} & $0.12 $ {\tiny ($\pm 0.00$)} & $0.54 $ {\tiny ($\pm 0.01$)} & $0.00 $ {\tiny ($\pm 0.00$)} & $1.00 $ {\tiny ($\pm 0.00$)}\\
 			& \multirow{5}{*}{States} & Replay & Reservoir (CCE) & No distillation & Flat & $\textbf{0.97} $ {\tiny ($\pm 0.00$)} & $\textbf{0.01} $ {\tiny ($\pm 0.01$)} & $\textbf{0.66} $ {\tiny ($\pm 0.02$)} & $\textbf{0.89} $ {\tiny ($\pm 0.05$)} & $\textbf{0.09} $ {\tiny ($\pm 0.06$)}\\
 			&  & Modular & No buffer & No distillation & Modular & $0.88 $ {\tiny ($\pm 0.00$)} & $0.11 $ {\tiny ($\pm 0.01$)} & $0.52 $ {\tiny ($\pm 0.01$)} & $0.00 $ {\tiny ($\pm 0.00$)} & $1.00 $ {\tiny ($\pm 0.00$)}\\
 			&  & Replay + Distillation & Reservoir (GEM) & Teacher-distillation & Flat & $0.95 $ {\tiny ($\pm 0.01$)} & $0.03 $ {\tiny ($\pm 0.01$)} & $0.58 $ {\tiny ($\pm 0.02$)} & $0.79 $ {\tiny ($\pm 0.06$)} & $0.21 $ {\tiny ($\pm 0.06$)}\\
@@ -65,14 +62,12 @@ We perform model selection by measuring Average Accuracy at the end of training 
 			&  & Replay & Reservoir (CCE) & No distillation & Flat & $\textbf{0.88} $ {\tiny ($\pm 0.01$)} & $\textbf{0.11} $ {\tiny ($\pm 0.01$)} & $0.50 $ {\tiny ($\pm 0.02$)} & $0.00 $ {\tiny ($\pm 0.00$)} & $1.00 $ {\tiny ($\pm 0.00$)}\\
 			&  & Replay + Distillation & Reservoir (CCE) & Self-distillation & Flat & $\textbf{0.88} $ {\tiny ($\pm 0.00$)} & $0.12 $ {\tiny ($\pm 0.00$)} & $\textbf{0.53} $ {\tiny ($\pm 0.01$)} & $0.00 $ {\tiny ($\pm 0.00$)} & $1.00 $ {\tiny ($\pm 0.00$)}\\
 			\midrule
-			%Task 2 (MNIST) & Predicates & Naive & No buffer & No distillation & Flat & $0.51 $ {\tiny ($\pm 0.10$)} & $0.51 $ {\tiny ($\pm 0.11$)} & $0.31 $ {\tiny ($\pm 0.02$)} & $0.49 $ {\tiny ($\pm 0.21$)} & $0.53 $ {\tiny ($\pm 0.20$)}\\
 			\multirow{14}{*}{\shortstack[c]{Task 2\\(MNIST)}} & \multirow{5}{*}{Predicates} & Replay & Reservoir (CCE) & No distillation & Flat & $\textbf{0.96} $ {\tiny ($\pm 0.01$)} & $\textbf{0.03} $ {\tiny ($\pm 0.01$)} & $\textbf{0.74} $ {\tiny ($\pm 0.02$)} & $\textbf{0.94} $ {\tiny ($\pm 0.02$)} & $\textbf{0.04} $ {\tiny ($\pm 0.03$)}\\
 			&  & Modular & No buffer & No distillation & Modular & $0.49 $ {\tiny ($\pm 0.11$)} & $0.53 $ {\tiny ($\pm 0.12$)} & $0.31 $ {\tiny ($\pm 0.02$)} & $0.49 $ {\tiny ($\pm 0.24$)} & $0.53 $ {\tiny ($\pm 0.22$)}\\
 			&  & Replay + Distillation & Reservoir (CCE) & Teacher-distillation & Flat & $0.92 $ {\tiny ($\pm 0.05$)} & $0.06 $ {\tiny ($\pm 0.05$)} & $0.66 $ {\tiny ($\pm 0.05$)} & $0.88 $ {\tiny ($\pm 0.09$)} & $0.10 $ {\tiny ($\pm 0.09$)}\\
 			&  & Replay + Modular & Reservoir (CCE) & No distillation & Modular & $0.94 $ {\tiny ($\pm 0.05$)} & $0.05 $ {\tiny ($\pm 0.05$)} & $0.71 $ {\tiny ($\pm 0.03$)} & $0.91 $ {\tiny ($\pm 0.08$)} & $0.08 $ {\tiny ($\pm 0.08$)}\\
 			&  & All & Reservoir (CCE) & Teacher-distillation & Modular & $0.92 $ {\tiny ($\pm 0.10$)} & $0.06 $ {\tiny ($\pm 0.09$)} & $0.63 $ {\tiny ($\pm 0.08$)} & $0.88 $ {\tiny ($\pm 0.16$)} & $0.09 $ {\tiny ($\pm 0.15$)}\\
 			\cdashline{2-11}
-			%Task 2 (MNIST) & States & Naive & No buffer & No distillation & Flat & $0.49 $ {\tiny ($\pm 0.12$)} & $0.53 $ {\tiny ($\pm 0.12$)} & $0.30 $ {\tiny ($\pm 0.03$)} & $0.48 $ {\tiny ($\pm 0.23$)} & $0.53 $ {\tiny ($\pm 0.21$)}\\
 			& \multirow{5}{*}{States} & Replay & Reservoir (CCE) & No distillation & Flat & $\textbf{0.98} $ {\tiny ($\pm 0.00$)} & $\textbf{0.01} $ {\tiny ($\pm 0.00$)} & $\textbf{0.71} $ {\tiny ($\pm 0.03$)} & $\textbf{0.98} $ {\tiny ($\pm 0.01$)} & $0.02 $ {\tiny ($\pm 0.01$)}\\
 			&  & Modular & No buffer & No distillation & Modular & $0.47 $ {\tiny ($\pm 0.12$)} & $0.55 $ {\tiny ($\pm 0.13$)} & $0.30 $ {\tiny ($\pm 0.02$)} & $0.47 $ {\tiny ($\pm 0.24$)} & $0.55 $ {\tiny ($\pm 0.22$)}\\
 			&  & Replay + Distillation & Reservoir (CCE) & Teacher-distillation & Flat & $0.95 $ {\tiny ($\pm 0.02$)} & $0.03 $ {\tiny ($\pm 0.02$)} & $0.57 $ {\tiny ($\pm 0.11$)} & $0.94 $ {\tiny ($\pm 0.04$)} & $0.05 $ {\tiny ($\pm 0.04$)}\\

@@ -122,28 +122,9 @@ Joint Concept Bottleneck Models are trained end-to-end, weighing concept and tas
 Albeit simple and easy to implement, Concept Bottleneck Models suffer from an heavy accuracy-interpretability trade-off and they fully disentangle the bottleneck layer only if they are trained as independent models~\cite{margeloiu2021concept}.
 Concept Embedding Models~\cite{espinosa2022concept}, post-hoc explanation methods~\cite{yuksekgonul2022post} and unsupervised objectives~\cite{sawada2022concept} for Concept Bottleneck Models have been proposed to mitigate such issues.
 %
-More formally, let $\gD \subseteq \sX \times \sC \times \sY$ be a dataset of perceptual stimuli $\vx \in \sX$ annotated with some task label $y \in \sY$ and intermediate concept annotations $\vc \in \sC$,\footnote{Traditional Concept Bottleneck Models assume Boolean concepts, i.e., $\sC = \sB^{|\sC|}$, but categorical and numerical extensions are possible as well.} then a Concept Bottleneck Model is the function composition $\omega \circ \psi \circ \phi$, 
-%
-%\TODO{KANDY CEM}
-%CBMs~\cite{koh2020concept} popularized the idea of an intermediate layer of human-specified concepts, referred to as concept bottleneck, and used to predict the final output. The set of concept labels $\sC$ is known in advance, thus the meaning of each element is pre-defined. Training examples are composed of task-level and concept-level supervisions, i.e., for each $\vx$ in the training set, the task label $y \in \sY$ and the set of active/not-active concepts $\vc \in \sC$ are fully provided, i.e., datasets are $\gD \subseteq \sX \times \sC \times \sY$.
-%The concept bottleneck allows intervention on the values of the predicted concepts within the model. The neural network is responsible of learning a composite function $\omega \circ \psi \circ \phi$, 
-where the (i.) \textit{perceptual backbone} $\phi \colon \R^{d} \mapsto \R^{d'}$ computes an initial representation of size $d'$ of the input (for example, it could be a pre-trained backbone), the (ii.) \textit{concept layer} $\psi \colon \R^{d'} \mapsto [0,1]^{|\sC|}$ is the function that predicts concepts, and the (iii.) \textit{task head} $\omega \colon [0,1]^{|\sC|} \mapsto \sY$ yields the final prediction. 
+More formally, let $\gD \subseteq \sX \times \sC \times \sY$ be a dataset of perceptual stimuli $\vx \in \sX$ annotated with some task label $y \in \sY$ and intermediate concept annotations $\vc \in \sC$,\footnote{Traditional Concept Bottleneck Models assume Boolean concepts, i.e., $\sC = \sB^{|\sC|}$, but categorical and numerical extensions are possible as well.} then a Concept Bottleneck Model is the function composition $\omega \circ \psi \circ \phi$, where the (i.) \textit{perceptual backbone} $\phi \colon \R^{d} \mapsto \R^{d'}$ computes an initial representation of size $d'$ of the input (for example, it could be a pre-trained backbone), the (ii.) \textit{concept layer} $\psi \colon \R^{d'} \mapsto [0,1]^{|\sC|}$ is the function that predicts concepts, and the (iii.) \textit{task head} $\omega \colon [0,1]^{|\sC|} \mapsto \sY$ yields the final prediction. 
 The output of $\psi$ is semantically disentangled by virtue of supervised training, however, in order to further promote interpretability, $\omega$ is often constrained to be interpretable-by-design as well (e.g., a linear classification layer or a symbolic function clearly mapping concepts to task predictions).
 %
-%Defining $\vy$ as the vector collecting each predicted target $\evy_i$ associated to the $i$-th task, we have:
-%\TODO{REWRITE TO REMOVE NUMBERED EQUATIONS AND USE EQUATION* ENV}
-%\begin{equation}
-%	\vx'=\phi_{\vtheta_1}(\vx),\quad \vc = \psi_{\vtheta_2}(\vx'),\quad \vy = \omega_{\vtheta_3}(\vc).
-%	\label{cem:eq:cbm}
-%\end{equation}
-%
-%\TODO{Omega should be interpretable and can be symbolic, interventions replace psi (either to perform sensitivity experiments, or to manually correct test-time errors) ...}
-%
-%\TODO{A CBM is usually trained with the objective argmin $\vtheta_1$ argmin $\vtheta_2$ argmin $\vtheta_3$ of lambda BCE(c, truec) + lambda CCE(y, truey)}
-%
-%\TODO{KANDY CEM}
-%
-%The notion of CBM was generalized and extended in CEMs~\cite{espinosa2022concept}, going beyond the limited expressiveness of a concept-score-only representation. 
 Concept Embedding Models~\cite{espinosa2022concept} generalize and extend Concept Bottleneck Models, going beyond the limited expressiveness of a score-only representation of concepts.
 In Concept Embedding Models, each concept is associated both with its own score $\evc_j$, and two learnable embeddings, that are mixed by a weighted average controlled by $\evc_j$. In detail, two functions $\rho^{pos}_j$ and $\rho^{neg}_j$ are responsible of computing the aforementioned embeddings for the $j$-th concept, $\rho^{\bullet}_j \colon \mathbb{R}^{d'} \mapsto \mathbb{R}^{e}$, where $e \geq 1$ is the size of each embedding. 
 %When predicting the activation scores of the concepts, the following $g$ (Eq.~\ref{cem:eq:cbm}) is exploited in CEMs,
@@ -190,12 +171,7 @@ The Neural Theorem Prover (NTP)~\cite{rocktaschel2016learning} is a Dynamic Neur
 Logic Explained Networks (LENs)~\cite{ciravegna2023logic} are Artificial Neural Networks which transform input logic concepts into output concepts, while explicitly providing a First-order Logic formula explaining the transformation. They can be used as classification heads on top of black-boxes, providing an interpretable layer, as fully interpretable stand-alone predictors (possibly by stacking multiple layers in a deep architecture), or, if they are trained by distillation~\cite{hinton2015distilling} on existing black-boxes, as a post-hoc explanation method. Moreover, by replacing the supervised classification objective with unsurpervised maximization of mutual information, Logic Explained Networks can be used as interpretable clustering approaches, capable of discovering logic concepts directly from data. 
 A Logic Explained Network module is composed of a set of arbitrary hidden layers, followed by a concept layer trained on a specific objective, based on the type of link between concepts and task (e.g., implication, co-implication, etc.). %encoding IF-rules ($input\_concept \Rightarrow output\_concept$), ONLY-IF-rules ($input\_concept \Leftarrow output\_concept$) or IFF-rules ($input\_concept \Leftrightarrow output\_concept$).
 After training, a pruning step enforces sparsity, in order to produce high-quality explanations, as truth tables computed by thresholding inputs and outputs.
-%Three flavors of LENs (based on different architectural constraints and pruning strategies) have been proposed, each with a different trade-off between expressive power, post-hoc explainability of a target model and self-interpretability.
-\iffalse
-$\psi$-networks have the best interpretability, but sacrifice both expressivity and explainability of black-box models, they impose a sigmoid activation to each of the hidden neurons and a node-level pruning of every weight below the top-k: these constraints guarantee disentanglement for each neuron and the dependence from at most k intermediate inputs.
-$\mu$-networks, conversely, do not impose any architectural constraint on the hidden layers, but are pruned at the network-level, were the input concepts are globally weighted by importance and the least important ones are removed, this provides a reasonable compromise, by having decent expressivity and interpretability, and the maximum post-hoc explainability.
-$ReLU$-networks have the highest expressivity and reasonable post-hoc explainability performance, at the expenses of low interpretability, they impose ReLU activations in the hidden layer and an example-level pruning which "shuts down" a different set of neurons for each input sample.
-\fi
+
 \chapter{Constraints and Machine Learning}
 \label{chap:ciml}
 
@@ -257,8 +233,6 @@ Hard constraints are more amenable to prescriptive analytics, but also situation
 %We cannot stress enough the importance of safety guarantees in high-stakes domains, such as a global pandemic, and we feel that, although interpretable-by-design and invaluable information-processing techniques, these methods are far from being completely reliable. We hope that proper care is taken by decision-makers when including these methods in the chain of trust, possibly and hopefully by always filtering automatic decisions with rational judgement.
 
 \paragraph{Hard Constraints.}
-%\label{sec:ico}
-%
 The most straight-forward way of enforcing Combinatorial Optimization constraints in a decision-making setting is the Predict-then-optimize (PTO)~\cite{el2019generalization} framework, a two-stage approach in which a predictor produces the inputs for a combinatorial optimizer, which then transforms it to output the final decision. Since the two components are decoupled, Predict-then-optimize does not allow any feedback, which could help the predictor achieve better convergence, however, since the predictor outputs have a downstream symbolic interpretation and since the optimizer is transparent, a Predict-then-optimize approach is interpretable-by-design in the sense that data flow is disentangled at least for the last layer of the predictor, in a way similar to Concept Bottleneck Models.
 %
 Problems solvable with Predict-then-optimize approaches are characterized by well-defined decision variables and feasible regions, but costs with an unknown dependency with respect to input features, for this reason predictors are usually Machine Learning models, capable of learning such costs from training data.
@@ -275,10 +249,6 @@ Empirical Model Learning is a generic framework combining arbitrary predictors a
 In their original work, Lombardi et al. formalize the framework for Artificial Neural Networks or Decision Trees (DTs) as predictors, and Local Search (LS), Mixed Integer Non-linear Programming (MINLP), Constraint Satisfaction (CS) or Satisfiability Modulo Theories (SMT) as optimization frameworks, however the basic principle can be generalized to other combinations.
 The predictor parameters are trained during a learning phase and their values are used to seed the optimization variables with initial guesses, and then the optimizer can find a feasible solution faster than unguided optimization. Unlike Predict-then-optimize, Machine Learning parameters can be further tuned by the optimization step, and in theory, the process can be iterated, providing backward feedback to the predictor as well.
 %The resulting optimization problem is interpretable-by-design, since it guarantees the enforcement of domain specific constraints, however it may not be human-understandable, since encoding the predictor may produce a rather large combinatorial problem specification.
-\iffalse
-Just as an example, here we describe how EML can be used to combine feed-forward ANNs and CS, a similar idea applies to the other combinations of optimizers and predictors as well. A single neuron is a non-linear function applied to the weighted sum of its inputs, therefore at any given moment, the constraints $Y = \phi(Y')$ and $Y' = b + \displaystyle\sum_{i}(w_i \cdot X_i)$ must hold. If the non-linearity function $\phi$ is already encoded in the CS background theory, the ANN predictor can be directly encoded as a set of constraints on inputs $X_i$ and outputs $Y$ (properly connecting variables to mimic the network architecture) and initializing constants $b$ and $w_i$ with values learned during training. In case backflow of information is allowed, we can simply make the parameters $B$ and $W_i$ variables as well, with initial guesses $b$ and $w_i$ set to be the ones learned.
-When the non-linearity function is not implemented by the CS solver, two bound consistency filters must be implemented as well, to enforce efficient pruning: an update on $y'$ triggers $max\_y = min(y, \phi(y'))$ and an update on $y$ triggers $max\_y' = min(y', \phi^{-1}(y))$. If the non-linearity is non-invertible, a value for the second filter can still be found by brute-forcing, at the expenses of efficiency.
-\fi
 
 A more refined way of providing feedback backwards, from the optimizer to the predictor, requires a gradient flow. This can be achieved, for instance, by embedding a Constraint Optimization approach inside a Machine Learning one. 
 From the interpretability perspective, this means that data flow can be constrained to follow arbitrary paths and achieve disentanglement also at levels other than the last (possibly achieving full disentanglement of neural networks, if each neural layer is intertwined with optimization layers, in a way similar to Logic Explained Networks).
@@ -297,7 +267,6 @@ To solve the ill-posed gradient (the sign threshold has gradient zero almost eve
 SATNet~\cite{wang2019satnet} layers are a similar approach in which MaxSAT constraints are instead learned.
 
 \paragraph{Soft Constraints.}
-%\label{sec:ntsc}
 Sometimes it is either infeasible or inefficient to enforce hard constraints on Machine Learning models, for instance in real-time applications or node-level inference, time or computational budgets, respectively, may be insufficient to allow the luxury of a full-blown optimization. In these circumstances, ``guiding'' the learning process may still be desirable, even though strong guarantees at inference time are lost. %Members of this family of constraint-injection methods are still interpretable-by-design according to the definition given by Rudin et al., however we advocate that these methods should be considered black-boxes and treated as such when reasoning about safety and high-stakes decisions.
 %
 If the learning task is framed as a prediction problem, the predictors of Predict-then-optimize approaches can fall into this category as well, in particular Smart Predict-then-optimize loss and the noise contrastive loss of Mulamba et al. can be used to impose soft constraints (computed only at training time by the optimizer) on the predictor.

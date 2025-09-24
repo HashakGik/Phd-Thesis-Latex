@@ -60,12 +60,7 @@ The following hyper-parameters are varied across experiments.
 
 \noindent\textbf{Calibrate.} True, False.
 
-\noindent\textbf{\textsc{SC} loss.} Binary cross-entropy, Semantic Loss of Umili et al.~\cite{umili2023grounding}. %Fuzzy. Fuzzy loss is the one proposed by~\cite{umili2023grounding}. It is a semantic-based regularization term in product t-norm, penalizing:
-%\begin{align*}
-%	\mathcal{L}_{seq}(\mathrm{pred}, \mathrm{labels}) = &1.0 - \bigoplus \mathrm{pred_{[labels == 1]}} + \\&1.0 - \prod \mathrm{pred_{[labels == 0]}}.
-%\end{align*}
-%
-%$\bigoplus$ is a reduction function computing the exclusive-or as: $a \oplus b = (a + b - a * b) * (1.0 - a * b)$.
+\noindent\textbf{\textsc{SC} loss.} Binary cross-entropy, Semantic Loss of Umili et al.~\cite{umili2023grounding}.
 
 
 
